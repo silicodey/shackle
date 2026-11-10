@@ -1,8 +1,6 @@
-# Tether
+# Shackle
 
 Self-hosted remote desktop. Control your Windows and Mac computers from any browser, through a server you run yourself. No accounts with a third party, no session limits, no licence checks.
-
-"Tether" is a working name. To rebrand, change `productName` and `appId` in `host/package.json` and the titles in `server/public/index.html`.
 
 ## What is in this repository
 
@@ -20,7 +18,7 @@ Self-hosted remote desktop. Control your Windows and Mac computers from any brow
 ```
  Browser (you) ──────── HTTPS / WebSocket ───────┐
                                                  ▼
-                                          Tether server      introduces the two sides,
+                                          Shackle server      introduces the two sides,
                                                  ▲           never sees screen or input
  Host app (remote PC) ──── WebSocket ────────────┘
 
@@ -51,14 +49,18 @@ Known limits of this design:
 
 ## Run the server
 
-### With Docker (recommended for the internet)
+### Easiest: a one-click host (Railway, Render, Fly)
+
+The `Dockerfile` in the repository root builds just the server. Connect the repo to the host, attach a persistent volume at `/data`, and generate a public HTTPS domain. The setup code appears in the deploy log. This route has no TURN relay, so connections across strict networks (some mobile and corporate ones) can fail.
+
+### With Docker on your own server (includes the TURN relay)
 
 Needs a Linux server with a public IP and a DNS name pointing at it. Open ports 80, 443, 3478 (TCP+UDP) and 49160-49200 (UDP).
 
 ```sh
 cp .env.example .env      # fill in DOMAIN, PUBLIC_IP, TURN_SECRET
 docker compose up -d
-docker compose logs tether   # shows the one-time setup code
+docker compose logs shackle   # shows the one-time setup code
 ```
 
 Open `https://your-domain`, enter the setup code, and create the owner account. Then turn on two-step verification under your email address in the top bar.
@@ -86,9 +88,9 @@ Without a TURN relay, connections work when a direct path exists (same network, 
 
 ## Build the host app
 
-Installers are built by GitHub Actions on every push: open the latest run under **Actions** and download `tether-windows` or `tether-macos`. Pushing a tag like `v1.0.0` also attaches them to a release.
+Installers are built by GitHub Actions on every push: open the latest run under **Actions** and download `shackle-windows` or `shackle-macos`. Pushing a tag like `v1.0.0` also attaches them to a release.
 
-To bake in your server address so users never type it, set `defaultServerUrl` in `host/tether.config.json` before building.
+To bake in your server address so users never type it, set `defaultServerUrl` in `host/shackle.config.json` before building.
 
 To run from source: `cd host && npm ci && npm start`.
 

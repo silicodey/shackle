@@ -1,4 +1,4 @@
-// Tether host: main process.
+// Shackle host: main process.
 // - "engine" window (hidden): signaling socket, WebRTC peer, screen capture.
 // - "panel" window: the visible control panel.
 // - this process: config, tray, consent prompts, input injection, clipboard, file I/O.
@@ -12,8 +12,8 @@ const os = require('node:os');
 const crypto = require('node:crypto');
 const input = require('./input');
 
-const IS_TEST = !app.isPackaged && !!process.env.TETHER_TEST_FILE;
-if (!app.isPackaged && process.env.TETHER_USER_DATA) app.setPath('userData', process.env.TETHER_USER_DATA);
+const IS_TEST = !app.isPackaged && !!process.env.SHACKLE_TEST_FILE;
+if (!app.isPackaged && process.env.SHACKLE_USER_DATA) app.setPath('userData', process.env.SHACKLE_USER_DATA);
 
 const PBKDF2_ITERATIONS = 200_000; // must match renderer/proto.js
 const MAX_FILE_BYTES = 2 * 1024 * 1024 * 1024;
@@ -28,7 +28,7 @@ if (!app.requestSingleInstanceLock()) {
 /* ------------------------------------------------------------------ */
 let defaults = {};
 try {
-  defaults = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'tether.config.json'), 'utf8'));
+  defaults = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'shackle.config.json'), 'utf8'));
 } catch {}
 
 const configFile = () => path.join(app.getPath('userData'), 'config.json');
@@ -52,7 +52,7 @@ function loadConfig() {
   try {
     cfg = { ...cfg, ...JSON.parse(fs.readFileSync(configFile(), 'utf8')) };
   } catch {}
-  if (!cfg.serverUrl) cfg.serverUrl = process.env.TETHER_SERVER_URL || defaults.defaultServerUrl || '';
+  if (!cfg.serverUrl) cfg.serverUrl = process.env.SHACKLE_SERVER_URL || defaults.defaultServerUrl || '';
 }
 function saveConfig() {
   fs.mkdirSync(path.dirname(configFile()), { recursive: true });
@@ -110,7 +110,7 @@ function broadcast() {
   if (panelWin && !panelWin.isDestroyed()) panelWin.webContents.send('panel:state', s);
   updateTray();
   if (IS_TEST) {
-    try { fs.writeFileSync(process.env.TETHER_TEST_FILE, JSON.stringify(s)); } catch {}
+    try { fs.writeFileSync(process.env.SHACKLE_TEST_FILE, JSON.stringify(s)); } catch {}
   }
 }
 
@@ -140,7 +140,7 @@ function createEngine() {
     onSessionChange(null);
     if (!quitting) setTimeout(() => engineWin && !engineWin.isDestroyed() && engineWin.reload(), 1000);
   });
-  if (process.env.TETHER_DEBUG) engineWin.webContents.on('console-message', (e) => console.log('[engine]', e.message));
+  if (process.env.SHACKLE_DEBUG) engineWin.webContents.on('console-message', (e) => console.log('[engine]', e.message));
 }
 
 function showPanel() {
@@ -152,7 +152,7 @@ function showPanel() {
   }
   panelWin = new BrowserWindow({
     width: 440, height: 720, minWidth: 400, minHeight: 560,
-    title: 'Tether', backgroundColor: '#0a0c0f', autoHideMenuBar: true, show: false,
+    title: 'Shackle', backgroundColor: '#0a0c0f', autoHideMenuBar: true, show: false,
     icon: process.platform === 'linux' ? asset('icon.png') : undefined,
     webPreferences: webPreferences('preload-panel.js'),
   });
@@ -195,14 +195,14 @@ function updateTray() {
   const status = state.session
     ? `In session with ${state.session.viewer}`
     : state.connection === 'online' ? 'Ready' : state.connection === 'connecting' ? 'Connecting…' : 'Offline';
-  tray.setToolTip(`Tether: ${status}`);
+  tray.setToolTip(`Shackle: ${status}`);
   tray.setContextMenu(Menu.buildFromTemplate([
     { label: status, enabled: false },
     { type: 'separator' },
-    { label: 'Open Tether', click: showPanel },
+    { label: 'Open Shackle', click: showPanel },
     { label: 'End session', visible: !!state.session, click: () => engineWin?.webContents.send('engine:end-session') },
     { type: 'separator' },
-    { label: 'Quit Tether', click: () => { quitting = true; app.quit(); } },
+    { label: 'Quit Shackle', click: () => { quitting = true; app.quit(); } },
   ]));
 }
 
@@ -214,7 +214,7 @@ function createTray() {
     tray.on('click', showPanel);
     updateTray();
   } catch (e) {
-    console.error('[tether] tray unavailable:', e.message);
+    console.error('[shackle] tray unavailable:', e.message);
   }
 }
 
@@ -252,7 +252,7 @@ function onSessionChange(session) {
       }
     }, 1000);
     if (Notification.isSupported()) {
-      new Notification({ title: 'Tether', body: `${session.viewer} is now connected to this computer.` }).show();
+      new Notification({ title: 'Shackle', body: `${session.viewer} is now connected to this computer.` }).show();
     }
   }
   if (!session && was) {
@@ -292,7 +292,7 @@ async function fileOp(msg) {
   if (msg.op === 'start') {
     const size = Number(msg.size);
     if (!Number.isFinite(size) || size < 0 || size > MAX_FILE_BYTES) return fileResult(msg.id, false, { error: 'file too large' });
-    const dir = path.join(app.getPath('downloads'), 'Tether');
+    const dir = path.join(app.getPath('downloads'), 'Shackle');
     await fs.promises.mkdir(dir, { recursive: true });
     const target = uniquePath(dir, safeFileName(msg.name));
     const handle = await fs.promises.open(target, 'wx');
@@ -316,7 +316,7 @@ async function fileOp(msg) {
       await fs.promises.rm(f.target, { force: true });
       return fileResult(msg.id, false, { error: 'incomplete transfer' });
     }
-    fileResult(msg.id, true, { savedAs: path.join('Downloads', 'Tether', path.basename(f.target)) });
+    fileResult(msg.id, true, { savedAs: path.join('Downloads', 'Shackle', path.basename(f.target)) });
   }
 }
 
@@ -383,11 +383,11 @@ ipcMain.on('engine:state', (e, patch) => {
 
 ipcMain.handle('engine:confirm', async (e, viewer) => {
   if (!fromEngine(e)) return false;
-  if (IS_TEST && process.env.TETHER_TEST_AUTO_ACCEPT === '1') return true;
+  if (IS_TEST && process.env.SHACKLE_TEST_AUTO_ACCEPT === '1') return true;
   app.focus({ steal: true });
   const { response } = await dialog.showMessageBox({
     type: 'question',
-    title: 'Tether',
+    title: 'Shackle',
     message: `Allow ${String(viewer).slice(0, 120)} to see and control this computer?`,
     detail: 'Only allow this if you know this person and are expecting their help. You can end the session at any time.',
     buttons: ['Allow', 'Decline'],
@@ -417,7 +417,7 @@ ipcMain.on('engine:clipboard-write', (e, text) => {
 
 ipcMain.on('engine:file', (e, msg) => {
   if (!fromEngine(e) || !msg) return;
-  if (process.env.TETHER_DEBUG && msg.op !== 'chunk') console.log('[file]', msg.op, msg.id, msg.name || '', msg.size ?? '');
+  if (process.env.SHACKLE_DEBUG && msg.op !== 'chunk') console.log('[file]', msg.op, msg.id, msg.name || '', msg.size ?? '');
   fileChain = fileChain.then(() => fileOp(msg)).catch(async (err) => {
     await abortFile(msg.id);
     fileResult(msg.id, false, { error: err.message });
@@ -573,7 +573,7 @@ app.on('before-quit', () => {
 app.on('activate', showPanel);
 
 app.whenReady().then(() => {
-  if (process.platform === 'win32') app.setAppUserModelId('com.silicode.tether');
+  if (process.platform === 'win32') app.setAppUserModelId('com.silicode.shackle');
   loadConfig();
   applyOptions();
   createTray();

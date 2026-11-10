@@ -42,7 +42,7 @@ jobs:
         working-directory: host
       - uses: actions/upload-artifact@v4
         with:
-          name: tether-windows
+          name: shackle-windows
           path: host/dist/*.exe
           if-no-files-found: error
 
@@ -59,7 +59,7 @@ jobs:
         working-directory: host
       - uses: actions/upload-artifact@v4
         with:
-          name: tether-macos
+          name: shackle-macos
           path: host/dist/*.dmg
           if-no-files-found: error
 

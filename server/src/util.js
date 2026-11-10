@@ -86,7 +86,7 @@ export function verifyTotp(secret, code) {
 export const newTotpSecret = () => base32Encode(crypto.randomBytes(20));
 
 /* ---------- TURN REST credentials (coturn use-auth-secret) ---------- */
-export function turnCredentials(secret, ttlSeconds = 6 * 3600, label = 'tether') {
+export function turnCredentials(secret, ttlSeconds = 6 * 3600, label = 'shackle') {
   const username = `${Math.floor(Date.now() / 1000) + ttlSeconds}:${label}`;
   const credential = crypto.createHmac('sha1', secret).update(username).digest('base64');
   return { username, credential };

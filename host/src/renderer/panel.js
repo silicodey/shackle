@@ -1,6 +1,6 @@
-// Control panel UI. All privileged work happens in the main process via window.tether.
+// Control panel UI. All privileged work happens in the main process via window.shackle.
 const $ = (id) => document.getElementById(id);
-const T = window.tether;
+const T = window.shackle;
 let state = null;
 let enrollFormTouched = false;
 
@@ -61,7 +61,7 @@ function render(s) {
     $('opt-login').checked = !!s.startAtLogin;
     $('opt-awake').checked = !!s.keepAwake;
   }
-  $('version').textContent = `Tether ${s.version}${s.inputAvailable ? '' : ' · input control unavailable on this system'}`;
+  $('version').textContent = `Shackle ${s.version}${s.inputAvailable ? '' : ' · input control unavailable on this system'}`;
 }
 
 $('server-form').addEventListener('submit', async (e) => {
@@ -74,7 +74,7 @@ $('server-form').addEventListener('submit', async (e) => {
 
 $('copy').addEventListener('click', async () => {
   if (!state?.code) return;
-  await act('copy', { text: `Tether ID: ${fmtCode(state.code)}\nPassword: ${state.supportPassword}` });
+  await act('copy', { text: `Shackle ID: ${fmtCode(state.code)}\nPassword: ${state.supportPassword}` });
   $('copy').textContent = 'Copied';
   setTimeout(() => ($('copy').textContent = 'Copy both'), 1500);
 });

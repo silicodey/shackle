@@ -1,11 +1,11 @@
-// Tether host engine: runs in a hidden window. Keeps the signaling socket open, answers session
+// Shackle host engine: runs in a hidden window. Keeps the signaling socket open, answers session
 // requests, verifies the viewer's password end to end, then streams the screen and relays input.
 import {
   PROTO_VERSION, PBKDF2_ITERATIONS, FILE_CHUNK, MAX_FILE_BYTES, deriveKey, fingerprintOf, makeProof, sameProof,
   randomB64, newSupportPassword,
 } from './proto.js';
 
-const T = window.tether;
+const T = window.shackle;
 
 let cfg = null;
 let ws = null;

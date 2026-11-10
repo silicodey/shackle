@@ -11,7 +11,7 @@ try {
   nut.keyboard.config.autoDelayMs = 0;
 } catch (e) {
   loadError = e;
-  console.error('[tether] input library failed to load:', e.message);
+  console.error('[shackle] input library failed to load:', e.message);
 }
 
 // KeyboardEvent.code → nut-js Key name
@@ -132,7 +132,7 @@ async function drain() {
     try {
       await apply(ev);
     } catch (e) {
-      console.error('[tether] input event failed:', ev.t, e.message);
+      console.error('[shackle] input event failed:', ev.t, e.message);
     }
   }
   running = false;

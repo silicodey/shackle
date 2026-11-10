@@ -1,9 +1,9 @@
 {
-  "name": "tether-host",
-  "productName": "Tether",
+  "name": "shackle-host",
+  "productName": "Shackle",
   "version": "1.0.0",
   "private": true,
-  "description": "Tether host: lets this computer be viewed and controlled through your own Tether server",
+  "description": "Shackle host: lets this computer be viewed and controlled through your own Shackle server",
   "author": "Silicode",
   "main": "src/main.js",
   "scripts": {
@@ -19,9 +19,9 @@
     "electron-builder": "^26.18.0"
   },
   "build": {
-    "appId": "com.silicode.tether",
-    "productName": "Tether",
-    "artifactName": "Tether-${version}-${os}-${arch}.${ext}",
+    "appId": "com.silicode.shackle",
+    "productName": "Shackle",
+    "artifactName": "Shackle-${version}-${os}-${arch}.${ext}",
     "directories": {
       "output": "dist",
       "buildResources": "build"
@@ -29,7 +29,7 @@
     "files": [
       "src/**/*",
       "assets/**/*",
-      "tether.config.json",
+      "shackle.config.json",
       "package.json"
     ],
     "asarUnpack": [
@@ -48,7 +48,7 @@
       "perMachine": false,
       "allowToChangeInstallationDirectory": false,
       "createDesktopShortcut": true,
-      "shortcutName": "Tether"
+      "shortcutName": "Shackle"
     },
     "mac": {
       "target": [
@@ -60,8 +60,8 @@
       "hardenedRuntime": false,
       "gatekeeperAssess": false,
       "extendInfo": {
-        "NSScreenCaptureUsageDescription": "Tether shares this screen with people you allow to connect.",
-        "NSAppleEventsUsageDescription": "Tether controls the mouse and keyboard during a remote session."
+        "NSScreenCaptureUsageDescription": "Shackle shares this screen with people you allow to connect.",
+        "NSAppleEventsUsageDescription": "Shackle controls the mouse and keyboard during a remote session."
       }
     },
     "afterPack": "scripts/after-pack.js"

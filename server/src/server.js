@@ -1,4 +1,4 @@
-// Tether server: accounts, device registry, WebRTC signaling and the web client.
+// Shackle server: accounts, device registry, WebRTC signaling and the web client.
 // Media never passes through this process. It only introduces the two peers.
 import http from 'node:http';
 import fs from 'node:fs';
@@ -29,7 +29,7 @@ const cfg = {
 const { s } = openDb(cfg.dataDir);
 const limiter = new RateLimiter();
 const PUBLIC_DIR = path.join(__dirname, '..', 'public');
-const COOKIE = 'tether_sid';
+const COOKIE = 'shackle_sid';
 
 /* ------------------------------------------------------------------ */
 /* first-run setup code                                                */
@@ -44,7 +44,7 @@ if (needsSetup()) {
     s.metaSet.run('setup_code', code);
   }
   console.log('\n==============================================================');
-  console.log(' Tether first-run setup');
+  console.log(' Shackle first-run setup');
   console.log(` Open the web client and enter this setup code:  ${code}`);
   console.log('==============================================================\n');
 }
@@ -278,8 +278,8 @@ async function handleApi(req, res, url) {
     if (user.totp_enabled) throw fail(409, 'already_enabled');
     const secret = newTotpSecret();
     s.userSetTotp.run(secret, 0, user.id);
-    const label = encodeURIComponent(`Tether:${user.email}`);
-    return send(res, 200, { secret, uri: `otpauth://totp/${label}?secret=${secret}&issuer=Tether` });
+    const label = encodeURIComponent(`Shackle:${user.email}`);
+    return send(res, 200, { secret, uri: `otpauth://totp/${label}?secret=${secret}&issuer=Shackle` });
   }
 
   if (route === 'POST /api/totp/enable') {
@@ -639,7 +639,7 @@ setInterval(() => {
 }, 30_000).unref();
 
 server.listen(cfg.port, cfg.host, () => {
-  console.log(`Tether server ${VERSION} listening on http://${cfg.host}:${cfg.port}`);
+  console.log(`Shackle server ${VERSION} listening on http://${cfg.host}:${cfg.port}`);
   if (!cfg.turnUrls.length) console.log('Note: no TURN relay configured. Connections across strict NATs may fail (see README).');
 });
 

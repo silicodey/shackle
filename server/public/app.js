@@ -234,7 +234,7 @@ $('join-form').addEventListener('submit', (e) => {
   if (code.length !== 9) return f.code.focus();
   if (!f.password.value.trim()) return f.password.focus();
   begin({ code }, `Support session ${formatCode(code)}`, f.password.value, {
-    title: 'Session password', sub: 'Ask the other person to read the password shown in their Tether window.', label: 'Password',
+    title: 'Session password', sub: 'Ask the other person to read the password shown in their Shackle window.', label: 'Password',
   });
   f.password.value = '';
   f.code.value = '';
@@ -307,5 +307,5 @@ $('pass-form').addEventListener('submit', async (e) => {
 });
 
 boot().catch(() => {
-  document.body.textContent = 'Cannot reach the Tether server.';
+  document.body.textContent = 'Cannot reach the Shackle server.';
 });

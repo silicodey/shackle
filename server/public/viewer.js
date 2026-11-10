@@ -96,7 +96,7 @@ class Session {
   }
 
   fail(message) {
-    console.error('[tether]', message);
+    console.error('[shackle]', message);
     this.finish(message);
   }
 

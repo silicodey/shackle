@@ -1,9 +1,9 @@
 {
-  "name": "tether-server",
+  "name": "shackle-server",
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "Tether self-hosted remote access server: accounts, device registry, signaling and web client",
+  "description": "Shackle self-hosted remote access server: accounts, device registry, signaling and web client",
   "main": "src/server.js",
   "engines": { "node": ">=22.13" },
   "scripts": {

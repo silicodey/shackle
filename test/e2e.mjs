@@ -13,7 +13,7 @@ const pwPath = process.env.PLAYWRIGHT_PATH || 'playwright';
 const { chromium, _electron: electron } = require(pwPath);
 
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
-const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'tether-e2e-'));
+const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'shackle-e2e-'));
 const PORT = 8097;
 const URL = `http://127.0.0.1:${PORT}`;
 const EMAIL = 'owner@example.com';
@@ -105,8 +105,8 @@ try {
     args: ['.', '--no-sandbox'],
     cwd: path.join(root, 'host'),
     env: {
-      ...process.env, TETHER_SERVER_URL: URL, TETHER_USER_DATA: path.join(tmp, 'host'),
-      TETHER_TEST_FILE: path.join(tmp, 'state.json'), TETHER_TEST_AUTO_ACCEPT: '1', TETHER_DEBUG: '1', NODE_OPTIONS: '',
+      ...process.env, SHACKLE_SERVER_URL: URL, SHACKLE_USER_DATA: path.join(tmp, 'host'),
+      SHACKLE_TEST_FILE: path.join(tmp, 'state.json'), SHACKLE_TEST_AUTO_ACCEPT: '1', SHACKLE_DEBUG: '1', NODE_OPTIONS: '',
     },
   });
   const hostLog = fs.createWriteStream(path.join(tmp, 'host.log'));
@@ -233,7 +233,7 @@ try {
     const toasts = await page.$$eval('.toast', (els) => els.map((t) => t.textContent));
     assert(toasts.some((t) => t.includes('Saved on the remote')), `toasts: ${JSON.stringify(toasts)}`);
     const dl = await app.evaluate(({ app: a }) => a.getPath('downloads'));
-    const saved = path.join(dl, 'Tether', 'payload-file.bin');
+    const saved = path.join(dl, 'Shackle', 'payload-file.bin');
     assert(fs.existsSync(saved), 'file not saved on host');
     assert(Buffer.compare(fs.readFileSync(saved), data) === 0, 'saved file differs');
     fs.rmSync(saved);

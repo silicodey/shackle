@@ -2,7 +2,7 @@ const { contextBridge, ipcRenderer } = require('electron');
 
 const on = (channel) => (fn) => ipcRenderer.on(channel, (_e, ...args) => fn(...args));
 
-contextBridge.exposeInMainWorld('tether', {
+contextBridge.exposeInMainWorld('shackle', {
   getConfig: () => ipcRenderer.invoke('engine:config'),
   getScreens: () => ipcRenderer.invoke('engine:screens'),
   setState: (patch) => ipcRenderer.send('engine:state', patch),

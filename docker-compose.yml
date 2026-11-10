@@ -1,7 +1,7 @@
-# Tether server + automatic HTTPS (Caddy) + TURN relay (coturn).
+# Shackle server + automatic HTTPS (Caddy) + TURN relay (coturn).
 # Copy .env.example to .env, fill it in, then:  docker compose up -d
 services:
-  tether:
+  shackle:
     build: ./server
     restart: unless-stopped
     environment:
@@ -10,7 +10,7 @@ services:
       TURN_URLS: turn:${DOMAIN}:3478?transport=udp,turn:${DOMAIN}:3478?transport=tcp
       TURN_SECRET: ${TURN_SECRET}
     volumes:
-      - tether-data:/data
+      - shackle-data:/data
     user: "0:0" # the named volume is created root-owned
 
   caddy:
@@ -19,11 +19,11 @@ services:
     ports:
       - "80:80"
       - "443:443"
-    command: caddy reverse-proxy --from ${DOMAIN} --to tether:8080
+    command: caddy reverse-proxy --from ${DOMAIN} --to shackle:8080
     volumes:
       - caddy-data:/data
     depends_on:
-      - tether
+      - shackle
 
   coturn:
     image: coturn/coturn:latest
@@ -46,5 +46,5 @@ services:
       - --denied-peer-ip=127.0.0.0-127.255.255.255
 
 volumes:
-  tether-data:
+  shackle-data:
   caddy-data:

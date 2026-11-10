@@ -4,7 +4,7 @@ import path from 'node:path';
 
 export function openDb(dataDir) {
   fs.mkdirSync(dataDir, { recursive: true });
-  const db = new DatabaseSync(path.join(dataDir, 'tether.db'));
+  const db = new DatabaseSync(path.join(dataDir, 'shackle.db'));
   db.exec(`
     PRAGMA journal_mode = WAL;
     PRAGMA foreign_keys = ON;

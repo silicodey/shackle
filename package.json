@@ -1,5 +1,5 @@
 {
-  "name": "tether",
+  "name": "shackle",
   "private": true,
   "description": "Self-hosted remote desktop: server, browser client and Windows/macOS host app",
   "scripts": {

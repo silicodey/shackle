@@ -3,12 +3,12 @@
 <head>
   <meta charset="utf-8">
   <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:">
-  <title>Tether</title>
+  <title>Shackle</title>
   <link rel="stylesheet" href="panel.css">
 </head>
 <body>
   <header>
-    <div class="brand"><span class="mark"></span>Tether</div>
+    <div class="brand"><span class="mark"></span>Shackle</div>
     <div class="status"><span class="dot" id="dot"></span><span id="status">Starting…</span></div>
   </header>
 
@@ -26,7 +26,7 @@
     <!-- macOS permissions -->
     <section class="card warn" id="perms" hidden>
       <div class="eyebrow">Permissions needed</div>
-      <p class="muted">macOS must allow Tether to share the screen and to control the mouse and keyboard. Grant both, then quit and reopen Tether.</p>
+      <p class="muted">macOS must allow Shackle to share the screen and to control the mouse and keyboard. Grant both, then quit and reopen Shackle.</p>
       <div class="perm" id="perm-screen"><span>Screen Recording</span><button class="btn sm" data-perm="screen">Open settings</button></div>
       <div class="perm" id="perm-accessibility"><span>Accessibility</span><button class="btn sm" data-perm="accessibility">Open settings</button></div>
     </section>
@@ -60,7 +60,7 @@
       <div class="eyebrow">Unattended access</div>
 
       <form id="enroll" hidden>
-        <p class="muted">Add this computer to your Tether account so you can reach it any time it is on.</p>
+        <p class="muted">Add this computer to your Shackle account so you can reach it any time it is on.</p>
         <input name="name" placeholder="Computer name" maxlength="64">
         <input name="email" type="email" placeholder="Account email" autocomplete="username">
         <input name="password" type="password" placeholder="Account password" autocomplete="current-password">
@@ -78,8 +78,8 @@
           <button class="btn primary" type="submit">Set</button>
         </form>
         <p class="msg" id="access-msg"></p>
-        <label class="toggle"><input type="checkbox" id="opt-login"><span>Start Tether when I sign in to this computer</span></label>
-        <label class="toggle"><input type="checkbox" id="opt-awake"><span>Keep this computer awake while Tether is running</span></label>
+        <label class="toggle"><input type="checkbox" id="opt-login"><span>Start Shackle when I sign in to this computer</span></label>
+        <label class="toggle"><input type="checkbox" id="opt-awake"><span>Keep this computer awake while Shackle is running</span></label>
         <button class="link danger" id="unenroll">Remove this computer from the account</button>
       </div>
     </section>
