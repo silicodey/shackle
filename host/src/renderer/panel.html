@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:">
+  <title>Tether</title>
+  <link rel="stylesheet" href="panel.css">
+</head>
+<body>
+  <header>
+    <div class="brand"><span class="mark"></span>Tether</div>
+    <div class="status"><span class="dot" id="dot"></span><span id="status">Starting…</span></div>
+  </header>
+
+  <main>
+    <!-- active session -->
+    <section class="card live" id="session" hidden>
+      <div>
+        <div class="eyebrow">Session in progress</div>
+        <div class="big" id="session-viewer"></div>
+        <p class="muted">This person can see your screen and use your mouse and keyboard.</p>
+      </div>
+      <button class="btn danger" id="end-session">End session</button>
+    </section>
+
+    <!-- macOS permissions -->
+    <section class="card warn" id="perms" hidden>
+      <div class="eyebrow">Permissions needed</div>
+      <p class="muted">macOS must allow Tether to share the screen and to control the mouse and keyboard. Grant both, then quit and reopen Tether.</p>
+      <div class="perm" id="perm-screen"><span>Screen Recording</span><button class="btn sm" data-perm="screen">Open settings</button></div>
+      <div class="perm" id="perm-accessibility"><span>Accessibility</span><button class="btn sm" data-perm="accessibility">Open settings</button></div>
+    </section>
+
+    <!-- server -->
+    <section class="card" id="server-card">
+      <div class="eyebrow">Server</div>
+      <form id="server-form" class="row">
+        <input name="url" placeholder="https://remote.example.com" spellcheck="false" autocomplete="off">
+        <button class="btn" type="submit">Save</button>
+      </form>
+      <p class="msg" id="server-msg"></p>
+    </section>
+
+    <!-- attended support -->
+    <section class="card" id="support">
+      <div class="eyebrow">Get help</div>
+      <p class="muted">Read these to the person helping you. You will be asked to approve before they connect.</p>
+      <div class="creds">
+        <div><label>Your ID</label><div class="code" id="code">--- --- ---</div></div>
+        <div><label>Password</label><div class="code" id="pass">--------</div></div>
+      </div>
+      <div class="row">
+        <button class="btn" id="copy">Copy both</button>
+        <button class="btn" id="new-code">New ID and password</button>
+      </div>
+    </section>
+
+    <!-- unattended -->
+    <section class="card">
+      <div class="eyebrow">Unattended access</div>
+
+      <form id="enroll" hidden>
+        <p class="muted">Add this computer to your Tether account so you can reach it any time it is on.</p>
+        <input name="name" placeholder="Computer name" maxlength="64">
+        <input name="email" type="email" placeholder="Account email" autocomplete="username">
+        <input name="password" type="password" placeholder="Account password" autocomplete="current-password">
+        <input name="totp" id="enroll-totp" placeholder="Authenticator code" inputmode="numeric" maxlength="7" hidden>
+        <button class="btn primary" type="submit">Add this computer</button>
+        <p class="msg" id="enroll-msg"></p>
+      </form>
+
+      <div id="enrolled" hidden>
+        <div class="kv"><span>Computer</span><b id="dev-name"></b></div>
+        <div class="kv"><span>Account</span><b id="dev-account"></b></div>
+        <div class="kv"><span>Access password</span><b id="pw-state"></b></div>
+        <form id="access" class="row">
+          <input name="password" type="password" placeholder="New access password (10+ characters)" autocomplete="new-password">
+          <button class="btn primary" type="submit">Set</button>
+        </form>
+        <p class="msg" id="access-msg"></p>
+        <label class="toggle"><input type="checkbox" id="opt-login"><span>Start Tether when I sign in to this computer</span></label>
+        <label class="toggle"><input type="checkbox" id="opt-awake"><span>Keep this computer awake while Tether is running</span></label>
+        <button class="link danger" id="unenroll">Remove this computer from the account</button>
+      </div>
+    </section>
+  </main>
+
+  <footer><span id="version"></span></footer>
+  <script src="panel.js"></script>
+</body>
+</html>

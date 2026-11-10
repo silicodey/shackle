@@ -1,0 +1,69 @@
+{
+  "name": "tether-host",
+  "productName": "Tether",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Tether host: lets this computer be viewed and controlled through your own Tether server",
+  "author": "Silicode",
+  "main": "src/main.js",
+  "scripts": {
+    "start": "electron .",
+    "dist:win": "electron-builder --win --x64 --publish never",
+    "dist:mac": "electron-builder --mac --arm64 --x64 --publish never"
+  },
+  "dependencies": {
+    "@nut-tree-fork/nut-js": "^4.2.6"
+  },
+  "devDependencies": {
+    "electron": "^45.2.3",
+    "electron-builder": "^26.18.0"
+  },
+  "build": {
+    "appId": "com.silicode.tether",
+    "productName": "Tether",
+    "artifactName": "Tether-${version}-${os}-${arch}.${ext}",
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "files": [
+      "src/**/*",
+      "assets/**/*",
+      "tether.config.json",
+      "package.json"
+    ],
+    "asarUnpack": [
+      "node_modules/@nut-tree-fork/**/*",
+      "**/*.node"
+    ],
+    "npmRebuild": false,
+    "win": {
+      "target": [
+        "nsis"
+      ],
+      "icon": "build/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": false,
+      "createDesktopShortcut": true,
+      "shortcutName": "Tether"
+    },
+    "mac": {
+      "target": [
+        "dmg"
+      ],
+      "icon": "build/icon.png",
+      "category": "public.app-category.utilities",
+      "identity": null,
+      "hardenedRuntime": false,
+      "gatekeeperAssess": false,
+      "extendInfo": {
+        "NSScreenCaptureUsageDescription": "Tether shares this screen with people you allow to connect.",
+        "NSAppleEventsUsageDescription": "Tether controls the mouse and keyboard during a remote session."
+      }
+    },
+    "afterPack": "scripts/after-pack.js"
+  }
+}

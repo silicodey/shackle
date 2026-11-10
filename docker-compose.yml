@@ -1,0 +1,50 @@
+# Tether server + automatic HTTPS (Caddy) + TURN relay (coturn).
+# Copy .env.example to .env, fill it in, then:  docker compose up -d
+services:
+  tether:
+    build: ./server
+    restart: unless-stopped
+    environment:
+      PUBLIC_URL: https://${DOMAIN}
+      TRUST_PROXY: "1"
+      TURN_URLS: turn:${DOMAIN}:3478?transport=udp,turn:${DOMAIN}:3478?transport=tcp
+      TURN_SECRET: ${TURN_SECRET}
+    volumes:
+      - tether-data:/data
+    user: "0:0" # the named volume is created root-owned
+
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    command: caddy reverse-proxy --from ${DOMAIN} --to tether:8080
+    volumes:
+      - caddy-data:/data
+    depends_on:
+      - tether
+
+  coturn:
+    image: coturn/coturn:latest
+    restart: unless-stopped
+    network_mode: host
+    command:
+      - --no-cli
+      - --fingerprint
+      - --use-auth-secret
+      - --static-auth-secret=${TURN_SECRET}
+      - --realm=${DOMAIN}
+      - --external-ip=${PUBLIC_IP}
+      - --listening-port=3478
+      - --min-port=49160
+      - --max-port=49200
+      - --no-multicast-peers
+      - --denied-peer-ip=10.0.0.0-10.255.255.255
+      - --denied-peer-ip=172.16.0.0-172.31.255.255
+      - --denied-peer-ip=192.168.0.0-192.168.255.255
+      - --denied-peer-ip=127.0.0.0-127.255.255.255
+
+volumes:
+  tether-data:
+  caddy-data:
