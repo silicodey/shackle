@@ -1,6 +1,7 @@
 // Shackle server: accounts, device registry, WebRTC signaling and the web client.
 // Media never passes through this process. It only introduces the two peers.
 import http from 'node:http';
+import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -24,6 +25,10 @@ const cfg = {
   turnUrls: (process.env.TURN_URLS || '').split(',').map((s) => s.trim()).filter(Boolean),
   turnSecret: process.env.TURN_SECRET || '',
   sessionDays: 30,
+  // Optional, for hosts without persistent storage (free tiers): see README "Free hosting".
+  ownerEmail: (process.env.OWNER_EMAIL || '').trim(),
+  ownerPassword: process.env.OWNER_PASSWORD || '',
+  secretKey: process.env.SECRET_KEY || '',
 };
 
 const { s } = openDb(cfg.dataDir);
@@ -37,6 +42,37 @@ const COOKIE = 'shackle_sid';
 function needsSetup() {
   return s.userCount.get().n === 0;
 }
+// Storage-less hosting: recreate the owner account from the environment on every fresh start.
+if (needsSetup() && cfg.ownerEmail && cfg.ownerPassword) {
+  if (!isEmail(cfg.ownerEmail) || cfg.ownerPassword.length < 10) {
+    console.error('OWNER_EMAIL must be an email address and OWNER_PASSWORD at least 10 characters. Ignoring both.');
+  } else {
+    s.userInsert.run(cfg.ownerEmail, await hashPassword(cfg.ownerPassword), now());
+    console.log(`Owner account ${cfg.ownerEmail} created from OWNER_EMAIL / OWNER_PASSWORD.`);
+  }
+}
+
+// With SECRET_KEY set, device tokens are signed and self-describing, so an enrolled computer can
+// re-register itself after the database has been wiped.
+function signDeviceToken(id, email, name, platform) {
+  const body = Buffer.from(JSON.stringify({ u: email, n: name, p: platform })).toString('base64url');
+  const mac = crypto.createHmac('sha256', cfg.secretKey).update(`v1.${id}.${body}`).digest('base64url');
+  return `v1.${id}.${body}.${mac}`;
+}
+function readDeviceToken(token) {
+  if (!cfg.secretKey) return null;
+  const parts = String(token).split('.');
+  if (parts.length !== 4 || parts[0] !== 'v1') return null;
+  const mac = crypto.createHmac('sha256', cfg.secretKey).update(`v1.${parts[1]}.${parts[2]}`).digest('base64url');
+  if (!safeEqual(mac, parts[3])) return null;
+  try {
+    const d = JSON.parse(Buffer.from(parts[2], 'base64url').toString('utf8'));
+    return { id: parts[1], email: String(d.u), name: cleanName(d.n), platform: String(d.p) };
+  } catch {
+    return null;
+  }
+}
+
 if (needsSetup()) {
   let code = s.metaGet.get('setup_code')?.value;
   if (!code) {
@@ -219,9 +255,9 @@ async function handleApi(req, res, url) {
     const user = await authenticate(req, body);
     let id;
     do id = randomDigits(9); while (s.devGet.get(id));
-    const token = randomToken(32);
     const name = cleanName(body.name);
     const platform = ['win32', 'darwin', 'linux'].includes(body.platform) ? body.platform : 'unknown';
+    const token = cfg.secretKey ? signDeviceToken(id, user.email, name, platform) : randomToken(32);
     s.devInsert.run(id, user.id, name, platform, sha256(token), now());
     audit(user.id, 'device_enrolled', `${name} (${id})`);
     return send(res, 200, { deviceId: id, deviceToken: token, account: user.email });
@@ -443,7 +479,16 @@ function handleHostMessage(host, msg) {
       let deviceOk = false;
       let deviceError = null;
       if (msg.deviceId && msg.token) {
-        const row = s.devGet.get(String(msg.deviceId));
+        let row = s.devGet.get(String(msg.deviceId));
+        if (!row) {
+          // Database was reset: accept a validly signed token and restore the device record.
+          const t = readDeviceToken(msg.token);
+          const owner = t && t.id === String(msg.deviceId) && /^\d{9}$/.test(t.id) ? s.userByEmail.get(t.email) : null;
+          if (owner) {
+            s.devInsert.run(t.id, owner.id, t.name, t.platform, sha256(String(msg.token)), now());
+            row = s.devGet.get(t.id);
+          }
+        }
         if (row && safeEqual(row.token_hash, sha256(String(msg.token)))) {
           const prev = deviceHosts.get(row.id);
           if (prev && prev !== host) {

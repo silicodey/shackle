@@ -53,6 +53,10 @@ Known limits of this design:
 
 The `Dockerfile` in the repository root builds just the server. Connect the repo to the host, attach a persistent volume at `/data`, and generate a public HTTPS domain. The setup code appears in the deploy log. This route has no TURN relay, so connections across strict networks (some mobile and corporate ones) can fail.
 
+### Free hosting (Render free plan)
+
+`render.yaml` deploys the server on Render's free plan: open `https://dashboard.render.com/blueprint/new?repo=https://github.com/silicodey/shackle` and fill in `OWNER_EMAIL` and `OWNER_PASSWORD`. The free plan has no persistent disk, so in this mode the owner account is recreated from those two values at every start, and enrolled computers re-register themselves with tokens signed by `SECRET_KEY`. Consequences: two-step verification, password changes, renames, the activity log and device removals are forgotten whenever the service restarts, and there is no TURN relay. Good for trying Shackle, not for production.
+
 ### With Docker on your own server (includes the TURN relay)
 
 Needs a Linux server with a public IP and a DNS name pointing at it. Open ports 80, 443, 3478 (TCP+UDP) and 49160-49200 (UDP).

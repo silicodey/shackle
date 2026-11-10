@@ -1,0 +1,19 @@
+# Render blueprint: free hosting for trying Shackle. No persistent disk is available on the free
+# plan, so the owner account comes from OWNER_EMAIL / OWNER_PASSWORD and devices re-register
+# themselves using SECRET_KEY-signed tokens after every restart.
+services:
+  - type: web
+    name: shackle
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /healthz
+    envVars:
+      - key: OWNER_EMAIL
+        sync: false
+      - key: OWNER_PASSWORD
+        sync: false
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DATA_DIR
+        value: /tmp/shackle
