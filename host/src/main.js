@@ -456,6 +456,44 @@ ipcMain.on('engine:pull-close', async (e, id) => {
   await f.handle.close().catch(() => {});
 });
 
+/* viewer windows: control another computer by ID + password */
+const ticketWaiters = new Map();
+ipcMain.on('engine:ticket', (e, reqId, ticket) => {
+  if (!fromEngine(e)) return;
+  const done = ticketWaiters.get(reqId);
+  if (done) {
+    ticketWaiters.delete(reqId);
+    done(typeof ticket === 'string' ? ticket : null);
+  }
+});
+function requestTicket() {
+  return new Promise((resolve) => {
+    const reqId = crypto.randomUUID();
+    const timer = setTimeout(() => { ticketWaiters.delete(reqId); resolve(null); }, 10_000);
+    ticketWaiters.set(reqId, (t) => { clearTimeout(timer); resolve(t); });
+    engineWin?.webContents.send('engine:ticket-request', reqId);
+  });
+}
+const viewerWins = new Set();
+function openViewer(code, ticket) {
+  const origin = new URL(cfg.serverUrl).origin;
+  const win = new BrowserWindow({
+    width: 1280, height: 820, minWidth: 640, minHeight: 420, title: 'Shackle', backgroundColor: '#050607', autoHideMenuBar: true,
+    // Remote page from your own server: no preload, no Node access, its own storage partition.
+    webPreferences: { contextIsolation: true, nodeIntegration: false, sandbox: true, partition: 'viewer', backgroundThrottling: false },
+  });
+  win.setMenuBarVisibility(false);
+  const ses = win.webContents.session;
+  const allowed = new Set(['clipboard-read', 'clipboard-sanitized-write', 'fullscreen', 'keyboardLock']);
+  ses.setPermissionRequestHandler((wc, permission, cb) => cb(new URL(wc.getURL()).origin === origin && allowed.has(permission)));
+  ses.setPermissionCheckHandler((wc, permission, requestingOrigin) => requestingOrigin === origin && allowed.has(permission));
+  win.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
+  win.webContents.on('will-navigate', (e) => e.preventDefault());
+  win.loadURL(`${cfg.serverUrl}/connect.html?code=${code}&ticket=${encodeURIComponent(ticket)}`);
+  viewerWins.add(win);
+  win.on('closed', () => viewerWins.delete(win));
+}
+
 ipcMain.handle('engine:clear-device', (e) => {
   if (!fromEngine(e)) return;
   cfg.device = null;
@@ -532,6 +570,15 @@ const actions = {
     saveConfig();
     applyOptions();
   },
+  async connectTo({ code }) {
+    const id = String(code || '').replace(/\D/g, '');
+    if (id.length !== 9) throw new Error('Enter the 9-digit ID shown on the other computer.');
+    if (id === state.code) throw new Error('That is this computer\'s own ID. Enter the other computer\'s ID.');
+    if (state.connection !== 'online') throw new Error('Not connected to the server yet. Wait for "Ready" and try again.');
+    const ticket = await requestTicket();
+    if (!ticket) throw new Error('The server did not answer. Try again in a moment.');
+    openViewer(id, ticket);
+  },
   async newCode() {
     engineWin?.webContents.send('engine:new-code');
   },
@@ -568,6 +615,7 @@ app.on('second-instance', showPanel);
 app.on('window-all-closed', () => {});
 app.on('before-quit', () => {
   quitting = true;
+  for (const w of viewerWins) w.destroy();
   input.releaseAll();
 });
 app.on('activate', showPanel);

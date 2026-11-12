@@ -139,8 +139,8 @@ try {
     await page.click('#join-form button');
   };
   const live = () => page.waitForSelector('#stage.live', { timeout: 30_000 });
-  const videoPoint = async (nx, ny) => {
-    const box = await page.evaluate(() => {
+  const videoPoint = async (nx, ny, pg = page) => {
+    const box = await pg.evaluate(() => {
       const v = document.getElementById('video');
       const r = v.getBoundingClientRect();
       const scale = Math.min(r.width / v.videoWidth, r.height / v.videoHeight);
@@ -192,7 +192,9 @@ try {
   await step('mouse click and keyboard: typing lands in a host text field', async () => {
     // Use the host panel's own "server" field as the typing target.
     const target = await panel.evaluate(() => {
-      const r = document.querySelector('#server-form input').getBoundingClientRect();
+      const el = document.querySelector('#server-form input');
+      el.scrollIntoView({ block: 'center' });
+      const r = el.getBoundingClientRect();
       return { x: r.left + r.width - 12, y: r.top + r.height / 2 };
     });
     const { bounds, display } = await app.evaluate(({ BrowserWindow, screen }) => {
@@ -332,6 +334,63 @@ try {
     await page.click('.device .btn.danger');
     await page.waitForSelector('#no-devices:not([hidden])');
     await panel.waitForSelector('#enroll:not([hidden])', { timeout: 10_000 });
+  });
+
+  await step('app to app: one Shackle app controls another by ID and password, no account', async () => {
+    const app2 = await electron.launch({
+      executablePath: require(path.join(root, 'host', 'node_modules', 'electron')),
+      args: ['.', '--no-sandbox'],
+      cwd: path.join(root, 'host'),
+      env: {
+        ...process.env, SHACKLE_SERVER_URL: URL, SHACKLE_USER_DATA: path.join(tmp, 'host2'),
+        SHACKLE_TEST_FILE: path.join(tmp, 'state2.json'), NODE_OPTIONS: '',
+      },
+    });
+    try {
+      let panel2 = null;
+      for (let i = 0; i < 100 && !panel2; i++) {
+        panel2 = app2.windows().find((w) => w.url().endsWith('panel.html')) || null;
+        if (!panel2) await sleep(100);
+      }
+      assert(panel2, 'second app did not open');
+      await panel2.waitForFunction(() => document.getElementById('status').textContent === 'Ready');
+      const own = (await panel2.textContent('#code')).replace(/\D/g, '');
+      await panel2.fill('#connect-form input', own);
+      await panel2.click('#connect-form button');
+      await panel2.waitForFunction(() => document.getElementById('connect-msg').textContent.includes('own ID'));
+
+      const c = await creds();
+      assert(c.code !== own, 'both apps got the same ID');
+      await panel2.fill('#connect-form input', c.code);
+      const [win] = await Promise.all([app2.waitForEvent('window'), panel2.click('#connect-form button')]);
+      win.on('pageerror', (e) => hostErrors.push(e.message));
+      await win.waitForSelector('#dlg-password[open]', { timeout: 30_000 });
+      await win.fill('#dlg-password input', c.pass);
+      await win.click('#dlg-password button[type=submit]');
+      await win.waitForSelector('#stage.live', { timeout: 30_000 });
+      await win.waitForFunction(() => document.getElementById('video').videoWidth > 0, null, { timeout: 20_000 });
+      await panel.waitForSelector('#session:not([hidden])');
+      const who = await panel.textContent('#session-viewer');
+      assert(who.includes(`ID ${own.replace(/(\d{3})(?=\d)/g, '$1 ')}`), `host shows "${who}"`);
+      // Both apps share one test screen: keep the viewer window away from where the pointer will land,
+      // otherwise the real pointer re-enters the viewer and feeds back.
+      await app2.evaluate(({ BrowserWindow }) => {
+        const w = BrowserWindow.getAllWindows().find((x) => x.webContents.getURL().includes('connect.html'));
+        w.setBounds({ x: 0, y: 300, width: 900, height: 480 });
+      });
+      await sleep(500);
+      const p = await videoPoint(0.9, 0.1, win);
+      await win.mouse.move(p.x, p.y);
+      await sleep(500);
+      const cur = await hostCursor();
+      assert(Math.abs(cur.x - 1152) <= 3 && Math.abs(cur.y - 80) <= 3, `cursor at ${cur.x},${cur.y}`);
+      await win.screenshot({ path: path.join(tmp, 'app-viewer.png') });
+      await panel2.screenshot({ path: path.join(tmp, 'panel2.png') });
+      await Promise.all([win.waitForEvent('close'), win.click('#v-end')]);
+      await panel.waitForSelector('#session', { state: 'hidden' });
+    } finally {
+      await app2.close().catch(() => {});
+    }
   });
 
   await step('no script errors in the viewer or the host', async () => {

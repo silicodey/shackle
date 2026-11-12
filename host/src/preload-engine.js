@@ -15,6 +15,8 @@ contextBridge.exposeInMainWorld('shackle', {
   pullRead: (id, offset, length) => ipcRenderer.invoke('engine:pull-read', id, offset, length),
   pullClose: (id) => ipcRenderer.send('engine:pull-close', id),
   clearDevice: () => ipcRenderer.invoke('engine:clear-device'),
+  ticket: (reqId, ticket) => ipcRenderer.send('engine:ticket', reqId, ticket),
+  onTicketRequest: on('engine:ticket-request'),
   onEndSession: on('engine:end-session'),
   onNewCode: on('engine:new-code'),
   onConfigRefresh: on('engine:config-refresh'),

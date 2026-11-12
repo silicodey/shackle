@@ -26,8 +26,9 @@ Self-hosted remote desktop. Control your Windows and Mac computers from any brow
                     (through your TURN relay only if a direct path is impossible)
 ```
 
-Two ways to connect:
+Three ways to connect:
 
+- **App to app.** Both people install Shackle. Each app shows its own ID and one-time password and has a "Control another computer" box. Type the other computer's ID, then its password; the other person clicks Allow. No account needed.
 - **Unattended access.** Install the host on your own computer, sign it in to your account once, set an access password. It then appears under "Your computers" in the web client whenever it is on.
 - **Support session.** The other person opens the host app and reads you the 9-digit ID and one-time password. They get an Allow/Decline prompt before you connect. The ID and password change after every session.
 

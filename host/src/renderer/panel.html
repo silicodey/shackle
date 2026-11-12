@@ -31,20 +31,21 @@
       <div class="perm" id="perm-accessibility"><span>Accessibility</span><button class="btn sm" data-perm="accessibility">Open settings</button></div>
     </section>
 
-    <!-- server -->
-    <section class="card" id="server-card">
-      <div class="eyebrow">Server</div>
-      <form id="server-form" class="row">
-        <input name="url" placeholder="https://remote.example.com" spellcheck="false" autocomplete="off">
-        <button class="btn" type="submit">Save</button>
+    <!-- control another computer -->
+    <section class="card">
+      <div class="eyebrow">Control another computer</div>
+      <p class="muted">Enter the ID shown in Shackle on the other computer. You will be asked for its password next.</p>
+      <form id="connect-form" class="row">
+        <input name="code" class="mono" inputmode="numeric" placeholder="000 000 000" maxlength="11" autocomplete="off" aria-label="Partner ID">
+        <button class="btn primary" type="submit">Connect</button>
       </form>
-      <p class="msg" id="server-msg"></p>
+      <p class="msg" id="connect-msg"></p>
     </section>
 
-    <!-- attended support -->
+    <!-- allow control of this computer -->
     <section class="card" id="support">
-      <div class="eyebrow">Get help</div>
-      <p class="muted">Read these to the person helping you. You will be asked to approve before they connect.</p>
+      <div class="eyebrow">Allow control of this computer</div>
+      <p class="muted">Give these to the person connecting to you. You will be asked to approve before they connect.</p>
       <div class="creds">
         <div><label>Your ID</label><div class="code" id="code">--- --- ---</div></div>
         <div><label>Password</label><div class="code" id="pass">--------</div></div>
@@ -82,6 +83,16 @@
         <label class="toggle"><input type="checkbox" id="opt-awake"><span>Keep this computer awake while Shackle is running</span></label>
         <button class="link danger" id="unenroll">Remove this computer from the account</button>
       </div>
+    </section>
+
+    <!-- server -->
+    <section class="card" id="server-card">
+      <div class="eyebrow">Server</div>
+      <form id="server-form" class="row">
+        <input name="url" placeholder="https://remote.example.com" spellcheck="false" autocomplete="off">
+        <button class="btn" type="submit">Save</button>
+      </form>
+      <p class="msg" id="server-msg"></p>
     </section>
   </main>
 

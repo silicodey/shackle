@@ -8,6 +8,7 @@ const $ = (id) => document.getElementById(id);
 
 const ERRORS = {
   offline: 'That computer is offline.',
+  self: 'That is this computer\'s own ID. Enter the ID shown on the other computer.',
   not_found: 'No computer is waiting with that ID.',
   busy: 'That computer is already in a session.',
   too_many_attempts: 'Too many attempts. Wait a few minutes and try again.',
@@ -74,7 +75,8 @@ class Session {
     this.bindUi();
 
     const scheme = location.protocol === 'https:' ? 'wss:' : 'ws:';
-    this.ws = new WebSocket(`${scheme}//${location.host}/ws?role=viewer`);
+    const ticket = this.opts.ticket ? `&ticket=${encodeURIComponent(this.opts.ticket)}` : '';
+    this.ws = new WebSocket(`${scheme}//${location.host}/ws?role=viewer${ticket}`);
     this.ws.onopen = () => this.sig({ type: 'connect', ...this.opts.target });
     this.ws.onmessage = (e) => this.onSignal(JSON.parse(e.data)).catch((err) => this.fail(err.message));
     this.ws.onclose = () => {

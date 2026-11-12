@@ -1,6 +1,6 @@
 {
   "name": "shackle-server",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "private": true,
   "type": "module",
   "description": "Shackle self-hosted remote access server: accounts, device registry, signaling and web client",

@@ -25,7 +25,7 @@ const QUALITY = {
 };
 
 const log = (...a) => console.log('[engine]', ...a);
-const send = (obj) => ws && ws.readyState === 1 && ws.send(JSON.stringify(obj));
+const send = (obj) => (ws && ws.readyState === 1 ? (ws.send(JSON.stringify(obj)), true) : false);
 
 async function newSupport() {
   const password = newSupportPassword();
@@ -95,6 +95,8 @@ async function onServer(msg) {
     case 'pong':
       lastPong = Date.now();
       return;
+    case 'ticket':
+      return T.ticket(msg.reqId, msg.ticket || null);
     case 'unenrolled':
       await T.clearDevice();
       cfg = await T.getConfig();
@@ -389,6 +391,9 @@ T.onEndSession(() => endSession('host_ended'));
 T.onNewCode(() => {
   if (session) return;
   newSupport().then(() => send({ type: 'new-code' }));
+});
+T.onTicketRequest((reqId) => {
+  if (!send({ type: 'viewer-ticket', reqId })) T.ticket(reqId, null);
 });
 T.onConfigRefresh(async () => { cfg = await T.getConfig(); });
 T.onClipboard((text) => session?.authed && ctrl(session, { t: 'clip', text }));

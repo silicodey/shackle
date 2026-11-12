@@ -13,7 +13,7 @@ import {
 } from './util.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const VERSION = '1.0.0';
+const VERSION = '1.1.0';
 
 const cfg = {
   port: Number(process.env.PORT || 8080),
@@ -442,6 +442,8 @@ const server = http.createServer(async (req, res) => {
 /** @type {Map<string, {id: string, host: HostConn, viewer: any, kind: string, startedAt: number, accepted: boolean}>} */
 const sessions = new Map();
 const hostsPerIp = new Map();
+// One-time tickets that let a Shackle app (no account) open a viewer connection for ID + password sessions.
+/** @type {Map<string, {code: string, name: string, exp: number}>} */ const tickets = new Map();
 
 function wsSend(ws, obj) {
   if (ws.readyState === 1) ws.send(JSON.stringify(obj));
@@ -515,6 +517,14 @@ function handleHostMessage(host, msg) {
     }
     case 'ping':
       return wsSend(host.ws, { type: 'pong' });
+    case 'viewer-ticket': {
+      if (!host.ready || !limiter.hit(`ticket:${host.ip}`, 30, 10 * 60_000)) {
+        return wsSend(host.ws, { type: 'ticket', reqId: msg.reqId, ticket: null });
+      }
+      const ticket = randomToken(24);
+      tickets.set(ticket, { code: host.code, name: host.name, exp: now() + 60_000 });
+      return wsSend(host.ws, { type: 'ticket', reqId: msg.reqId, ticket });
+    }
     case 'new-code':
       if (host.ready && !host.sessionId) wsSend(host.ws, { type: 'code', code: newSupportCode(host) });
       return;
@@ -553,15 +563,17 @@ function handleViewerMessage(viewer, msg) {
       let host = null;
       let kind = 'unattended';
       if (msg.deviceId) {
-        const row = s.devGet.get(String(msg.deviceId));
+        const row = viewer.userId ? s.devGet.get(String(msg.deviceId)) : null;
         if (!row || row.user_id !== viewer.userId) return wsSend(viewer.ws, { type: 'error', code: 'not_found' });
         host = deviceHosts.get(row.id);
         if (!host) return wsSend(viewer.ws, { type: 'error', code: 'offline' });
       } else {
         kind = 'support';
-        if (!limiter.hit(`code:${viewer.userId}`, 30, 10 * 60_000)) return wsSend(viewer.ws, { type: 'error', code: 'too_many_attempts' });
+        const who = viewer.userId ? `u${viewer.userId}` : `ip${viewer.ip}`;
+        if (!limiter.hit(`code:${who}`, 30, 10 * 60_000)) return wsSend(viewer.ws, { type: 'error', code: 'too_many_attempts' });
         host = codeHosts.get(String(msg.code || '').replace(/\D/g, ''));
         if (!host) return wsSend(viewer.ws, { type: 'error', code: 'not_found' });
+        if (viewer.fromCode && host.code === viewer.fromCode) return wsSend(viewer.ws, { type: 'error', code: 'self' });
       }
       if (host.sessionId) return wsSend(viewer.ws, { type: 'error', code: 'busy' });
       const id = randomToken(12);
@@ -605,7 +617,20 @@ server.on('upgrade', (req, socket, head) => {
     socket.destroy();
   };
 
-  if (role === 'viewer') {
+  const ticketParam = url.searchParams.get('ticket');
+  if (role === 'viewer' && ticketParam) {
+    // A Shackle app connecting to another by ID + password. No account; identified by its own ID.
+    const t = tickets.get(ticketParam);
+    tickets.delete(ticketParam);
+    if (!t || t.exp < now()) return deny('401 Unauthorized');
+    wss.handleUpgrade(req, socket, head, (ws) => {
+      const label = `${t.name} (ID ${t.code.replace(/(\d{3})(?=\d)/g, '$1 ')})`;
+      const viewer = { ws, id: randomToken(6), ip, userId: null, email: label, fromCode: t.code, sessionId: null, alive: true };
+      attach(ws, viewer, handleViewerMessage, () => {
+        if (viewer.sessionId) endSession(viewer.sessionId, 'viewer_disconnected', 'viewer');
+      });
+    });
+  } else if (role === 'viewer') {
     // Browser connection: cookie auth, so the Origin must be ours.
     if (!originAllowed(req)) return deny('403 Forbidden');
     const sess = sessionUser(req);
@@ -677,6 +702,7 @@ setInterval(() => {
 setInterval(() => {
   s.sessPurge.run(now());
   s.auditTrim.run();
+  for (const [k, t] of tickets) if (t.exp < now()) tickets.delete(k);
   // Drop session requests that were never answered.
   for (const sess of sessions.values()) {
     if (!sess.accepted && now() - sess.startedAt > 90_000) endSession(sess.id, 'timeout');

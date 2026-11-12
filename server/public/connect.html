@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>Shackle</title>
+  <link rel="icon" href="/icon.svg">
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <dialog id="dlg-password">
+    <form method="dialog" id="pw-form">
+      <h3 id="pw-title">Connect</h3>
+      <p class="muted" id="pw-sub"></p>
+      <label><span id="pw-label">Access password</span>
+        <input name="password" type="password" autocomplete="off" required>
+      </label>
+      <p class="error" id="pw-error" role="alert"></p>
+      <div class="row end">
+        <button class="btn" type="button" data-close>Cancel</button>
+        <button class="btn primary" type="submit">Connect</button>
+      </div>
+    </form>
+  </dialog>
+
+  <div id="viewer" hidden>
+    <div class="bar" id="bar">
+      <div class="bar-left">
+        <span class="dot" id="v-dot"></span>
+        <strong id="v-name"></strong>
+        <span class="muted small" id="v-stats"></span>
+      </div>
+      <div class="bar-right">
+        <select id="v-screen" title="Monitor" hidden></select>
+        <select id="v-quality" title="Quality">
+          <option value="balanced">Balanced</option>
+          <option value="sharp">Sharp text</option>
+          <option value="smooth">Smooth motion</option>
+          <option value="low">Low bandwidth</option>
+        </select>
+        <select id="v-keys" title="Send keys">
+          <option value="">Send keys…</option>
+        </select>
+        <button class="btn sm" id="v-clip" title="Type your clipboard into the remote computer's clipboard">Send clipboard</button>
+        <button class="btn sm" id="v-send" title="Send a file to the remote computer">Send file</button>
+        <button class="btn sm" id="v-pull" title="Pick a file on the remote computer and download it here">Get file</button>
+        <button class="btn sm" id="v-full">Full screen</button>
+        <button class="btn sm danger" id="v-end">Disconnect</button>
+      </div>
+    </div>
+    <div class="stage" id="stage" tabindex="0">
+      <video id="video" autoplay playsinline muted></video>
+      <div class="overlay" id="v-overlay">
+        <div class="spinner"></div>
+        <p id="v-status">Connecting…</p>
+        <button class="btn" id="v-cancel">Cancel</button>
+      </div>
+    </div>
+    <div class="toasts" id="toasts"></div>
+    <input type="file" id="file-input" hidden>
+  </div>
+
+  <script type="module" src="/connect.js"></script>
+</body>
+</html>

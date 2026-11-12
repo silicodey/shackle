@@ -24,7 +24,7 @@ function render(s) {
   const status = s.session ? 'In session'
     : s.connection === 'online' ? 'Ready'
     : s.connection === 'connecting' ? 'Connecting…'
-    : !s.serverUrl ? 'No server set' : 'Server unreachable, retrying…';
+    : !s.serverUrl ? 'No server set' : 'Waking the server, up to a minute…';
   $('status').textContent = status;
   $('dot').className = `dot ${s.session ? 'warn' : s.connection === 'online' ? 'on' : s.connection === 'connecting' ? 'warn' : 'off'}`;
 
@@ -68,8 +68,26 @@ $('server-form').addEventListener('submit', async (e) => {
   e.preventDefault();
   msg('server-msg', '');
   const res = await act('setServer', { url: e.target.elements.url.value }, 'server-msg');
-  if (res.ok) msg('server-msg', 'Saved.', true);
+  if (res.ok) {
+    msg('server-msg', 'Saved.', true);
+    msg('enroll-msg', '');
+    msg('connect-msg', '');
+  }
   e.target.elements.url.blur();
+});
+
+$('connect-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const input = e.target.elements.code;
+  const btn = e.target.querySelector('button');
+  msg('connect-msg', '');
+  btn.disabled = true;
+  const res = await act('connectTo', { code: input.value }, 'connect-msg');
+  btn.disabled = false;
+  if (res.ok) input.value = '';
+});
+$('connect-form').elements.code.addEventListener('input', (e) => {
+  e.target.value = e.target.value.replace(/\D/g, '').slice(0, 9).replace(/(\d{3})(?=\d)/g, '$1 ');
 });
 
 $('copy').addEventListener('click', async () => {

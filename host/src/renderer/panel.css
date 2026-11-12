@@ -85,3 +85,6 @@ body.indicator .btn { -webkit-app-region: no-drag; }
 ::-webkit-scrollbar { width: 10px; }
 ::-webkit-scrollbar-thumb { background: var(--line-2); border-radius: 10px; border: 3px solid var(--bg); }
 ::-webkit-scrollbar-track { background: transparent; }
+
+.mono { font-family: var(--mono); letter-spacing: 0.06em; }
+#connect-form input { font-size: 17px; }
