@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>Shackle: free, open-source remote desktop</title>
+  <meta name="description" content="Control another computer, or let someone help with yours. Free and open source for Windows and Mac. No account, no time limits.">
+  <meta property="og:title" content="Shackle: free, open-source remote desktop">
+  <meta property="og:description" content="Control another computer, or let someone help with yours. Free and open source for Windows and Mac.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://shackle.silicode.co/">
+  <link rel="icon" href="/icon.svg">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <header class="top">
+    <a class="brand" href="/"><img src="/mark.svg" alt="" width="28" height="28">Shackle</a>
+    <nav>
+      <a href="#security">Security</a>
+      <a href="https://github.com/silicodey/shackle">Source code</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero">
+      <p class="tag"><span class="pulse"></span>Free and open source</p>
+      <h1>Two computers.<br><em>One screen.</em></h1>
+      <p class="lede">Control another computer, or let someone you trust help with yours. No account, no time limits, no licence nagging.</p>
+
+      <div class="download" id="download">
+        <a class="btn primary" id="dl-main" href="https://github.com/silicodey/shackle/releases/latest/download/Shackle-Setup-Windows.exe">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11m0 0-4.500-4.500M12 15l4.500-4.500M5 19.500h14"/></svg>
+          <span id="dl-label">Download for Windows</span>
+        </a>
+        <p class="alt" id="dl-alt">
+          Also for
+          <a data-os="win" href="https://github.com/silicodey/shackle/releases/latest/download/Shackle-Setup-Windows.exe">Windows</a>,
+          <a data-os="mac-arm" href="https://github.com/silicodey/shackle/releases/latest/download/Shackle-Mac-arm64.dmg">Mac (Apple chip)</a> and
+          <a data-os="mac-intel" href="https://github.com/silicodey/shackle/releases/latest/download/Shackle-Mac-x64.dmg">Mac (Intel)</a>.
+          <a href="https://github.com/silicodey/shackle/releases/latest/download/SHA256SUMS.txt">Checksums</a>
+        </p>
+      </div>
+
+      <!-- Security limits: shown in full, directly under the download link, on purpose. -->
+      <section class="limits" id="security" aria-labelledby="limits-title">
+        <h2 id="limits-title">Read this before you install</h2>
+        <p class="limits-lede">Shackle is new. We would rather tell you its limits than have you find them.</p>
+        <ul>
+          <li><b>Whoever you let in has full control.</b> They see your screen and can open your files, your email and your banking. Scammers use remote-control tools of every brand to steal money. Never give your ID and password to someone who contacted you first, whatever they say they are from.</li>
+          <li><b>The installers are not code-signed.</b> Windows shows "unknown publisher" and macOS blocks the first launch. That also means your computer cannot confirm the download came from us. Download only from this page and compare the file with the published checksums if you can.</li>
+          <li><b>No independent security audit yet.</b> The code has been reviewed and tested by its authors only. It is open source so anyone can inspect it.</li>
+          <li><b>The connection server sees who connects to whom.</b> Screen, keyboard and files travel encrypted between the two computers and are not readable by the server. The server does see IP addresses, IDs and connection times.</li>
+          <li><b>A compromised server could attack the password check.</b> If someone took over the server and intercepted a connection attempt, they could try to guess that session's password offline. Passwords are random and change after every session, which limits this, but it is not yet mathematically ruled out.</li>
+          <li><b>Files you receive are not scanned.</b> Treat a file sent through Shackle like any download.</li>
+          <li><b>This is an early preview on a small free server.</b> The first connection can take a minute, and on some mobile or company networks it will not connect at all.</li>
+        </ul>
+        <p class="limits-foot">What we do to reduce misuse: you approve every connection on screen, after the caller has already proven they know your password. A banner showing who is connected stays on top for the whole session. Passwords are single use. Settings that would let someone back in later are locked while anyone is connected. The app always shows its icon in the system tray while it is running. <a href="https://github.com/silicodey/shackle/blob/main/SECURITY.md">Full security notes</a></p>
+      </section>
+    </section>
+
+    <figure class="shot">
+      <img src="/app.png" alt="The Shackle window: your ID and password on the left, a box for your partner's ID on the right" width="940" height="620" loading="lazy">
+    </figure>
+
+    <section class="steps">
+      <div><span>1</span><h3>Both install Shackle</h3><p>Open it. Each computer gets its own ID and a one-time password.</p></div>
+      <div><span>2</span><h3>Share ID and password</h3><p>The person being helped reads theirs out. The helper types them in.</p></div>
+      <div><span>3</span><h3>Click Allow</h3><p>Nothing happens until the person at the computer approves. They can end it at any moment.</p></div>
+    </section>
+
+    <section class="facts">
+      <div><h3>Free, for any use</h3><p>No account, no session limits, no "commercial use suspected" pop-ups.</p></div>
+      <div><h3>Open source</h3><p>MIT licensed. Read it, change it, or run your own server.</p></div>
+      <div><h3>Direct and encrypted</h3><p>The two computers talk to each other, not through us.</p></div>
+    </section>
+  </main>
+
+  <footer>
+    <span>Made by <a href="https://silicode.co">Silicode</a>. MIT licence.</span>
+    <a href="https://github.com/silicodey/shackle">github.com/silicodey/shackle</a>
+  </footer>
+  <script src="/site.js"></script>
+</body>
+</html>

@@ -6,15 +6,31 @@
   <title>Shackle</title>
   <link rel="stylesheet" href="panel.css">
 </head>
-<body>
-  <header>
-    <div class="brand"><span class="mark"></span>Shackle</div>
-    <div class="status"><span class="dot" id="dot"></span><span id="status">Starting…</span></div>
-  </header>
+<body class="app">
+  <aside class="side">
+    <div class="brand"><img src="../../assets/mark.svg" alt="" width="30" height="30"><span>Shackle</span></div>
+    <nav>
+      <button class="nav on" data-tab="remote">
+        <svg viewBox="0 0 24 24"><path d="M4 8h13m0 0-3.500-3.500M17 8l-3.500 3.500M20 16H7m0 0 3.500-3.500M7 16l3.500 3.500"/></svg>Remote control
+      </button>
+      <button class="nav" data-tab="unattended">
+        <svg viewBox="0 0 24 24"><path d="M4 5.500h16v10.500H4zM9 20h6M12 16v4"/></svg>Unattended access
+      </button>
+      <button class="nav" data-tab="activity">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.500"/><path d="M12 7.500V12l3 2"/></svg>Activity
+      </button>
+      <button class="nav" data-tab="settings">
+        <svg viewBox="0 0 24 24"><path d="M5 7h9m4 0h1M5 12h2m4 0h8M5 17h10m4 0h0"/><circle cx="16" cy="7" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="17" r="2"/></svg>Settings
+      </button>
+    </nav>
+    <div class="side-foot">
+      <div class="status"><span class="dot" id="dot"></span><span id="status">Starting…</span></div>
+      <div class="ver" id="version"></div>
+    </div>
+  </aside>
 
   <main>
-    <!-- active session -->
-    <section class="card live" id="session" hidden>
+    <section class="banner live" id="session" hidden>
       <div>
         <div class="eyebrow">Session in progress</div>
         <div class="big" id="session-viewer"></div>
@@ -23,80 +39,111 @@
       <button class="btn danger" id="end-session">End session</button>
     </section>
 
-    <!-- macOS permissions -->
-    <section class="card warn" id="perms" hidden>
-      <div class="eyebrow">Permissions needed</div>
-      <p class="muted">macOS must allow Shackle to share the screen and to control the mouse and keyboard. Grant both, then quit and reopen Shackle.</p>
-      <div class="perm" id="perm-screen"><span>Screen Recording</span><button class="btn sm" data-perm="screen">Open settings</button></div>
-      <div class="perm" id="perm-accessibility"><span>Accessibility</span><button class="btn sm" data-perm="accessibility">Open settings</button></div>
-    </section>
-
-    <!-- control another computer -->
-    <section class="card">
-      <div class="eyebrow">Control another computer</div>
-      <p class="muted">Enter the ID shown in Shackle on the other computer. You will be asked for its password next.</p>
-      <form id="connect-form" class="row">
-        <input name="code" class="mono" inputmode="numeric" placeholder="000 000 000" maxlength="11" autocomplete="off" aria-label="Partner ID">
-        <button class="btn primary" type="submit">Connect</button>
-      </form>
-      <p class="msg" id="connect-msg"></p>
-    </section>
-
-    <!-- allow control of this computer -->
-    <section class="card" id="support">
-      <div class="eyebrow">Allow control of this computer</div>
-      <p class="muted">Give these to the person connecting to you. You will be asked to approve before they connect.</p>
-      <div class="creds">
-        <div><label>Your ID</label><div class="code" id="code">--- --- ---</div></div>
-        <div><label>Password</label><div class="code" id="pass">--------</div></div>
-      </div>
-      <div class="row">
-        <button class="btn" id="copy">Copy both</button>
-        <button class="btn" id="new-code">New ID and password</button>
+    <section class="banner warn" id="perms" hidden>
+      <div class="grow">
+        <div class="eyebrow">macOS permissions needed</div>
+        <p class="muted">Allow both, then quit and reopen Shackle.</p>
+        <div class="perm" id="perm-screen"><span>Screen Recording</span><button class="btn sm" data-perm="screen">Open settings</button></div>
+        <div class="perm" id="perm-accessibility"><span>Accessibility</span><button class="btn sm" data-perm="accessibility">Open settings</button></div>
       </div>
     </section>
 
-    <!-- unattended -->
-    <section class="card">
-      <div class="eyebrow">Unattended access</div>
+    <!-- ───────── Remote control ───────── -->
+    <div class="tab" id="tab-remote">
+      <div class="duo">
+        <section class="card" id="support">
+          <h2>Allow remote control</h2>
+          <p class="muted">Give this ID and password to the person you want to let in. You will be asked to approve before they connect.</p>
+          <div class="field">
+            <label>Your ID</label>
+            <div class="value"><span class="code" id="code">--- --- ---</span></div>
+          </div>
+          <div class="field">
+            <label>Password</label>
+            <div class="value">
+              <span class="code accent" id="pass">--------</span>
+              <button class="icon" id="new-code" title="New ID and password">
+                <svg viewBox="0 0 24 24"><path d="M19 12a7 7 0 1 1-2.050-4.950M19 5v4h-4"/></svg>
+              </button>
+            </div>
+          </div>
+          <button class="btn wide" id="copy">Copy ID and password</button>
+        </section>
 
-      <form id="enroll" hidden>
-        <p class="muted">Add this computer to your Shackle account so you can reach it any time it is on.</p>
-        <input name="name" placeholder="Computer name" maxlength="64">
-        <input name="email" type="email" placeholder="Account email" autocomplete="username">
-        <input name="password" type="password" placeholder="Account password" autocomplete="current-password">
-        <input name="totp" id="enroll-totp" placeholder="Authenticator code" inputmode="numeric" maxlength="7" hidden>
-        <button class="btn primary" type="submit">Add this computer</button>
-        <p class="msg" id="enroll-msg"></p>
-      </form>
+        <section class="card">
+          <h2>Control a remote computer</h2>
+          <p class="muted">Enter the ID shown in Shackle on the other computer. You will be asked for its password next.</p>
+          <form id="connect-form">
+            <div class="field">
+              <label for="partner">Partner ID</label>
+              <input id="partner" name="code" class="code-input" inputmode="numeric" placeholder="000 000 000" maxlength="11" autocomplete="off">
+            </div>
+            <button class="btn primary wide" type="submit">Connect</button>
+            <p class="msg" id="connect-msg"></p>
+          </form>
+        </section>
+      </div>
+      <p class="safety">
+        <svg viewBox="0 0 24 24"><path d="M12 3.500 4.500 6.500v5c0 4.500 3 8 7.500 9.500 4.500-1.500 7.500-5 7.500-9.500v-5z"/><path d="M12 8.500v4.500m0 3v0"/></svg>
+        Only share your ID and password with people you know and trust. Nobody from Microsoft, Apple, your bank or the police will ever ask you to install Shackle.
+      </p>
+    </div>
 
-      <div id="enrolled" hidden>
-        <div class="kv"><span>Computer</span><b id="dev-name"></b></div>
-        <div class="kv"><span>Account</span><b id="dev-account"></b></div>
-        <div class="kv"><span>Access password</span><b id="pw-state"></b></div>
-        <form id="access" class="row">
-          <input name="password" type="password" placeholder="New access password (10+ characters)" autocomplete="new-password">
-          <button class="btn primary" type="submit">Set</button>
+    <!-- ───────── Unattended access ───────── -->
+    <div class="tab" id="tab-unattended" hidden>
+      <section class="card">
+        <h2>Unattended access</h2>
+        <form id="enroll" hidden>
+          <p class="muted">Add this computer to your account on a Shackle server so you can reach it from a browser whenever it is on. This needs an account on the server, which you get by running your own.</p>
+          <input name="name" placeholder="Computer name" maxlength="64">
+          <input name="email" type="email" placeholder="Account email" autocomplete="username">
+          <input name="password" type="password" placeholder="Account password" autocomplete="current-password">
+          <input name="totp" id="enroll-totp" placeholder="Authenticator code" inputmode="numeric" maxlength="7" hidden>
+          <button class="btn primary" type="submit">Add this computer</button>
+          <p class="msg" id="enroll-msg"></p>
         </form>
-        <p class="msg" id="access-msg"></p>
+
+        <div id="enrolled" hidden>
+          <div class="kv"><span>Computer</span><b id="dev-name"></b></div>
+          <div class="kv"><span>Account</span><b id="dev-account"></b></div>
+          <div class="kv"><span>Access password</span><b id="pw-state"></b></div>
+          <form id="access" class="row">
+            <input name="password" type="password" placeholder="New access password (10+ characters)" autocomplete="new-password">
+            <button class="btn primary" type="submit">Set</button>
+          </form>
+          <p class="msg" id="access-msg"></p>
+          <button class="link danger" id="unenroll">Remove this computer from the account</button>
+        </div>
+      </section>
+    </div>
+
+    <!-- ───────── Activity ───────── -->
+    <div class="tab" id="tab-activity" hidden>
+      <section class="card">
+        <h2>Who has connected to this computer</h2>
+        <p class="muted">Kept on this computer only.</p>
+        <ul class="history" id="history"></ul>
+      </section>
+    </div>
+
+    <!-- ───────── Settings ───────── -->
+    <div class="tab" id="tab-settings" hidden>
+      <section class="card">
+        <h2>Settings</h2>
         <label class="toggle"><input type="checkbox" id="opt-login"><span>Start Shackle when I sign in to this computer</span></label>
         <label class="toggle"><input type="checkbox" id="opt-awake"><span>Keep this computer awake while Shackle is running</span></label>
-        <button class="link danger" id="unenroll">Remove this computer from the account</button>
-      </div>
-    </section>
-
-    <!-- server -->
-    <section class="card" id="server-card">
-      <div class="eyebrow">Server</div>
-      <form id="server-form" class="row">
-        <input name="url" placeholder="https://remote.example.com" spellcheck="false" autocomplete="off">
-        <button class="btn" type="submit">Save</button>
-      </form>
-      <p class="msg" id="server-msg"></p>
-    </section>
+        <div class="field" id="server-card">
+          <label>Server</label>
+          <form id="server-form" class="row">
+            <input name="url" placeholder="https://remote.example.com" spellcheck="false" autocomplete="off">
+            <button class="btn" type="submit">Save</button>
+          </form>
+          <p class="muted">The server only introduces two computers to each other. Change this if you run your own.</p>
+          <p class="msg" id="server-msg"></p>
+        </div>
+      </section>
+    </div>
   </main>
-
-  <footer><span id="version"></span></footer>
   <script src="panel.js"></script>
 </body>
 </html>

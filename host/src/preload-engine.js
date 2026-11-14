@@ -7,6 +7,7 @@ contextBridge.exposeInMainWorld('shackle', {
   getScreens: () => ipcRenderer.invoke('engine:screens'),
   setState: (patch) => ipcRenderer.send('engine:state', patch),
   confirmSession: (viewer) => ipcRenderer.invoke('engine:confirm', viewer),
+  cancelConfirm: () => ipcRenderer.send('engine:confirm-cancel'),
   setSession: (session) => ipcRenderer.send('engine:session', session),
   input: (ev, displayId) => ipcRenderer.send('engine:input', ev, displayId),
   clipboardWrite: (text) => ipcRenderer.send('engine:clipboard-write', text),

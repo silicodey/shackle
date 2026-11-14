@@ -19,12 +19,42 @@ async function act(name, payload, msgId) {
   return res;
 }
 
+for (const b of document.querySelectorAll('.nav')) {
+  b.addEventListener('click', () => {
+    for (const n of document.querySelectorAll('.nav')) n.classList.toggle('on', n === b);
+    for (const t of document.querySelectorAll('.tab')) t.hidden = t.id !== `tab-${b.dataset.tab}`;
+  });
+}
+
+function renderHistory(list) {
+  const ul = $('history');
+  ul.replaceChildren();
+  if (!list || !list.length) {
+    const li = document.createElement('li');
+    li.className = 'none';
+    li.textContent = 'Nobody has connected yet.';
+    return ul.append(li);
+  }
+  const fmt = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' });
+  for (const h of list) {
+    const li = document.createElement('li');
+    const mins = h.end ? Math.max(1, Math.round((h.end - h.start) / 60000)) : null;
+    for (const text of [h.viewer, fmt.format(h.start), mins ? `${mins} min` : 'in progress']) {
+      const span = document.createElement('span');
+      span.textContent = text;
+      li.append(span);
+    }
+    ul.append(li);
+  }
+}
+
 function render(s) {
   state = s;
+  renderHistory(s.history);
   const status = s.session ? 'In session'
     : s.connection === 'online' ? 'Ready'
     : s.connection === 'connecting' ? 'Connecting…'
-    : !s.serverUrl ? 'No server set' : 'Waking the server, up to a minute…';
+    : !s.serverUrl ? 'No server set' : 'Waking the server…';
   $('status').textContent = status;
   $('dot').className = `dot ${s.session ? 'warn' : s.connection === 'online' ? 'on' : s.connection === 'connecting' ? 'warn' : 'off'}`;
 
@@ -53,15 +83,15 @@ function render(s) {
   $('enroll').hidden = !!s.device;
   $('enrolled').hidden = !s.device;
   if (!s.device && !enrollFormTouched) $('enroll').elements.name.value = s.deviceName || '';
+  $('opt-login').checked = !!s.startAtLogin;
+  $('opt-awake').checked = !!s.keepAwake;
   if (s.device) {
     $('dev-name').textContent = `${s.deviceName} · ${fmtCode(s.device.id)}`;
     $('dev-account').textContent = s.device.account || '';
     $('pw-state').textContent = s.unattendedSet ? 'Set' : 'Not set: unattended access is off';
     $('pw-state').style.color = s.unattendedSet ? 'var(--accent)' : 'var(--warn)';
-    $('opt-login').checked = !!s.startAtLogin;
-    $('opt-awake').checked = !!s.keepAwake;
   }
-  $('version').textContent = `Shackle ${s.version}${s.inputAvailable ? '' : ' · input control unavailable on this system'}`;
+  $('version').textContent = `Version ${s.version}${s.inputAvailable ? '' : ' · input control unavailable'}`;
 }
 
 $('server-form').addEventListener('submit', async (e) => {
@@ -94,7 +124,7 @@ $('copy').addEventListener('click', async () => {
   if (!state?.code) return;
   await act('copy', { text: `Shackle ID: ${fmtCode(state.code)}\nPassword: ${state.supportPassword}` });
   $('copy').textContent = 'Copied';
-  setTimeout(() => ($('copy').textContent = 'Copy both'), 1500);
+  setTimeout(() => ($('copy').textContent = 'Copy ID and password'), 1500);
 });
 $('new-code').addEventListener('click', () => act('newCode'));
 $('end-session').addEventListener('click', () => act('endSession'));

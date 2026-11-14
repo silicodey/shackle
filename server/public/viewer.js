@@ -143,7 +143,7 @@ class Session {
         this.sessionId = msg.sessionId;
         this.ice = msg.ice;
         $('v-name').textContent = msg.hostName || this.opts.name;
-        this.status(this.kind === 'support' ? 'Waiting for the other person to allow access…' : 'Reaching the computer…');
+        this.status('Reaching the computer…');
         return;
       case 'rejected':
         this.sessionId = null;
@@ -232,6 +232,8 @@ class Session {
         this.send({ t: 'auth', proof: await makeProof(this.key, 'viewer', this.nonce, this.hostFp, this.viewerFp) });
         return;
       }
+      case 'awaiting-consent':
+        return this.status('Password accepted. Waiting for the other person to click Allow…');
       case 'auth-fail':
         this.password = null;
         this.authError = 'Wrong password. Try again.';

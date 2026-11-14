@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'">
+  <title>Shackle: allow remote control?</title>
+  <link rel="stylesheet" href="panel.css">
+</head>
+<body class="consent">
+  <img src="../../assets/mark.svg" alt="" width="44" height="44">
+  <h1>Allow this person to control your computer?</h1>
+  <div class="who" id="who"></div>
+  <div class="warnbox">
+    They will see your screen and can use your mouse and keyboard, open your files and act as you.
+    <b>Decline if someone you do not know called, emailed or messaged you and asked you to do this.</b>
+  </div>
+  <div class="row">
+    <button class="btn" id="decline">Decline</button>
+    <button class="btn primary" id="allow" disabled>Allow (3)</button>
+  </div>
+  <script src="consent.js"></script>
+</body>
+</html>

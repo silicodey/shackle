@@ -13,7 +13,7 @@ import {
 } from './util.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const VERSION = '1.1.0';
+const VERSION = '1.2.0';
 
 const cfg = {
   port: Number(process.env.PORT || 8080),
@@ -574,6 +574,8 @@ function handleViewerMessage(viewer, msg) {
         host = codeHosts.get(String(msg.code || '').replace(/\D/g, ''));
         if (!host) return wsSend(viewer.ws, { type: 'error', code: 'not_found' });
         if (viewer.fromCode && host.code === viewer.fromCode) return wsSend(viewer.ws, { type: 'error', code: 'self' });
+        // Cap attempts against any one computer, whoever they come from.
+        if (!limiter.hit(`target:${host.code}`, 20, 10 * 60_000)) return wsSend(viewer.ws, { type: 'error', code: 'too_many_attempts' });
       }
       if (host.sessionId) return wsSend(viewer.ws, { type: 'error', code: 'busy' });
       const id = randomToken(12);
@@ -624,7 +626,9 @@ server.on('upgrade', (req, socket, head) => {
     tickets.delete(ticketParam);
     if (!t || t.exp < now()) return deny('401 Unauthorized');
     wss.handleUpgrade(req, socket, head, (ws) => {
-      const label = `${t.name} (ID ${t.code.replace(/(\d{3})(?=\d)/g, '$1 ')})`;
+      // Only the server-assigned ID is shown to the other side. A self-chosen computer name could
+      // be set to something like "Microsoft Support" to trick the person being asked for access.
+      const label = `Shackle ID ${t.code.replace(/(\d{3})(?=\d)/g, '$1 ')}`;
       const viewer = { ws, id: randomToken(6), ip, userId: null, email: label, fromCode: t.code, sessionId: null, alive: true };
       attach(ws, viewer, handleViewerMessage, () => {
         if (viewer.sessionId) endSession(viewer.sessionId, 'viewer_disconnected', 'viewer');

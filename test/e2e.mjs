@@ -128,6 +128,7 @@ try {
 
   await step('host registers and shows an ID and one-time password', async () => {
     await panel.waitForFunction(() => document.getElementById('status').textContent === 'Ready');
+    await panel.screenshot({ path: path.join(tmp, 'panel.png') });
     const c = await creds();
     assert(/^\d{9}$/.test(c.code), `bad code ${c.code}`);
     assert(/^[a-z0-9]{8}$/.test(c.pass), `bad password ${c.pass}`);
@@ -191,6 +192,7 @@ try {
 
   await step('mouse click and keyboard: typing lands in a host text field', async () => {
     // Use the host panel's own "server" field as the typing target.
+    await panel.click('[data-tab=settings]');
     const target = await panel.evaluate(() => {
       const el = document.querySelector('#server-form input');
       el.scrollIntoView({ block: 'center' });
@@ -213,6 +215,7 @@ try {
     const value = await panel.inputValue('#server-form input');
     assert(value === `${URL}/abc-123Z`, `host field contains "${value}"`);
     await panel.fill('#server-form input', URL);
+    await panel.click('[data-tab=remote]');
   });
 
   await step('clipboard: viewer to host and host to viewer', async () => {
@@ -268,6 +271,7 @@ try {
   });
 
   await step('unattended: enroll this computer from the host panel', async () => {
+    await panel.click('[data-tab=unattended]');
     await panel.fill('#enroll input[name=name]', 'Test Rig');
     await panel.fill('#enroll input[name=email]', EMAIL);
     await panel.fill('#enroll input[name=password]', 'wrong password!');
@@ -280,7 +284,6 @@ try {
     await page.waitForSelector('.device.online', { timeout: 15_000 });
     assert((await page.textContent('.device-name')) === 'Test Rig', 'device name not shown');
     await page.screenshot({ path: path.join(tmp, 'dashboard.png') });
-    await panel.screenshot({ path: path.join(tmp, 'panel.png') });
   });
 
   await step('unattended: refused until an access password is set', async () => {
@@ -320,6 +323,16 @@ try {
     await download.saveAs(out);
     assert(download.suggestedFilename() === 'from-host.txt', 'wrong download name');
     assert(Buffer.compare(fs.readFileSync(out), fs.readFileSync(src)) === 0, 'downloaded file differs');
+  });
+
+  await step('hardening: account and password settings are locked while someone is connected', async () => {
+    await panel.fill('#access input', 'attacker-sets-this-1');
+    await panel.click('#access button');
+    await panel.waitForFunction(() => document.getElementById('access-msg').textContent.includes('End the session first'));
+    const r = await panel.evaluate(() => window.shackle.action('setServer', { url: 'https://evil.example' }));
+    assert(r.ok === false, 'server address could be changed during a session');
+    const r2 = await panel.evaluate(() => window.shackle.action('connectTo', { code: '123456789' }));
+    assert(r2.ok === false, 'outgoing connection allowed during a session');
   });
 
   await step('host can end the session; viewer is told', async () => {

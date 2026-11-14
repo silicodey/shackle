@@ -1,16 +1,19 @@
 {
   "name": "shackle-server",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "private": true,
   "type": "module",
   "description": "Shackle self-hosted remote access server: accounts, device registry, signaling and web client",
   "main": "src/server.js",
-  "engines": { "node": ">=22.13" },
+  "engines": {
+    "node": ">=22.13"
+  },
   "scripts": {
     "start": "node --disable-warning=ExperimentalWarning src/server.js",
     "test": "node --disable-warning=ExperimentalWarning --test test/*.test.js"
   },
   "dependencies": {
     "ws": "^8.18.0"
-  }
+  },
+  "license": "MIT"
 }

@@ -1,7 +1,7 @@
 {
   "name": "shackle-host",
   "productName": "Shackle",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "private": true,
   "description": "Shackle host: lets this computer be viewed and controlled through your own Shackle server",
   "author": "Silicode",
@@ -21,7 +21,6 @@
   "build": {
     "appId": "com.silicode.shackle",
     "productName": "Shackle",
-    "artifactName": "Shackle-${version}-${os}-${arch}.${ext}",
     "directories": {
       "output": "dist",
       "buildResources": "build"
@@ -48,7 +47,8 @@
       "perMachine": false,
       "allowToChangeInstallationDirectory": false,
       "createDesktopShortcut": true,
-      "shortcutName": "Shackle"
+      "shortcutName": "Shackle",
+      "artifactName": "Shackle-Setup-Windows.${ext}"
     },
     "mac": {
       "target": [
@@ -62,8 +62,13 @@
       "extendInfo": {
         "NSScreenCaptureUsageDescription": "Shackle shares this screen with people you allow to connect.",
         "NSAppleEventsUsageDescription": "Shackle controls the mouse and keyboard during a remote session."
-      }
+      },
+      "artifactName": "Shackle-Mac-${arch}.${ext}"
     },
-    "afterPack": "scripts/after-pack.js"
-  }
+    "afterPack": "scripts/after-pack.js",
+    "dmg": {
+      "artifactName": "Shackle-Mac-${arch}.${ext}"
+    }
+  },
+  "license": "MIT"
 }

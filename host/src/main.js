@@ -101,6 +101,7 @@ function fullState() {
     startAtLogin: cfg.startAtLogin,
     keepAwake: cfg.keepAwake,
     inputAvailable: input.available(),
+    history: history.slice(-30).reverse(),
     permissions: permissions(),
   };
 }
@@ -151,7 +152,7 @@ function showPanel() {
     return;
   }
   panelWin = new BrowserWindow({
-    width: 440, height: 720, minWidth: 400, minHeight: 560,
+    width: 940, height: 620, minWidth: 820, minHeight: 540,
     title: 'Shackle', backgroundColor: '#0a0c0f', autoHideMenuBar: true, show: false,
     icon: process.platform === 'linux' ? asset('icon.png') : undefined,
     webPreferences: webPreferences('preload-panel.js'),
@@ -172,7 +173,7 @@ function showPanel() {
 function showIndicator(session) {
   hideIndicator();
   const area = screen.getPrimaryDisplay().workArea;
-  const w = 380, h = 60;
+  const w = 400, h = 60;
   indicatorWin = new BrowserWindow({
     width: w, height: h, x: area.x + area.width - w - 16, y: area.y + area.height - h - 16,
     frame: false, resizable: false, movable: true, minimizable: false, maximizable: false, fullscreenable: false,
@@ -238,9 +239,30 @@ function applyOptions() {
 let clipTimer = null;
 let lastClip = '';
 
+const historyFile = () => path.join(app.getPath('userData'), 'history.json');
+let history = [];
+function loadHistory() {
+  try {
+    const h = JSON.parse(fs.readFileSync(historyFile(), 'utf8'));
+    if (Array.isArray(h)) history = h.slice(-100);
+  } catch {}
+}
+function saveHistory() {
+  try { fs.writeFileSync(historyFile(), JSON.stringify(history.slice(-100))); } catch {}
+}
+
 function onSessionChange(session) {
   const was = state.session;
   state.session = session;
+  if (session && !was) {
+    history.push({ viewer: session.viewer, kind: session.kind, start: session.since, end: null });
+    saveHistory();
+  }
+  if (!session && was) {
+    const last = history[history.length - 1];
+    if (last && !last.end) last.end = Date.now();
+    saveHistory();
+  }
   if (session && !was) {
     showIndicator(session);
     lastClip = clipboard.readText();
@@ -381,22 +403,43 @@ ipcMain.on('engine:state', (e, patch) => {
   broadcast();
 });
 
+let consentWin = null;
+let consentDone = null;
+function askConsent(viewer) {
+  return new Promise((resolve) => {
+    if (consentDone) consentDone(false);
+    const timer = setTimeout(() => finish(false), 60_000);
+    function finish(allowed) {
+      if (consentDone !== finish) return;
+      consentDone = null;
+      clearTimeout(timer);
+      const w = consentWin;
+      consentWin = null;
+      if (w && !w.isDestroyed()) w.destroy();
+      resolve(allowed);
+    }
+    consentDone = finish;
+    consentWin = new BrowserWindow({
+      width: 480, height: 430, resizable: false, minimizable: false, maximizable: false, fullscreenable: false,
+      alwaysOnTop: true, center: true, title: 'Shackle', backgroundColor: '#0a0c0f', autoHideMenuBar: true,
+      webPreferences: webPreferences('preload-panel.js'),
+    });
+    lockDown(consentWin);
+    consentWin.setMenuBarVisibility(false);
+    consentWin.setAlwaysOnTop(true, 'screen-saver');
+    consentWin.loadFile(page('consent.html'), { query: { viewer: String(viewer).slice(0, 120) } });
+    consentWin.on('closed', () => finish(false));
+    app.focus({ steal: true });
+  });
+}
+
 ipcMain.handle('engine:confirm', async (e, viewer) => {
   if (!fromEngine(e)) return false;
   if (IS_TEST && process.env.SHACKLE_TEST_AUTO_ACCEPT === '1') return true;
-  app.focus({ steal: true });
-  const { response } = await dialog.showMessageBox({
-    type: 'question',
-    title: 'Shackle',
-    message: `Allow ${String(viewer).slice(0, 120)} to see and control this computer?`,
-    detail: 'Only allow this if you know this person and are expecting their help. You can end the session at any time.',
-    buttons: ['Allow', 'Decline'],
-    defaultId: 1,
-    cancelId: 1,
-    noLink: true,
-    signal: AbortSignal.timeout(60_000),
-  }).catch(() => ({ response: 1 }));
-  return response === 0;
+  return askConsent(viewer);
+});
+ipcMain.on('engine:confirm-cancel', (e) => {
+  if (fromEngine(e) && consentDone) consentDone(false);
 });
 
 ipcMain.on('engine:session', (e, session) => {
@@ -505,7 +548,8 @@ ipcMain.handle('engine:clear-device', (e) => {
 /* IPC: panel                                                          */
 /* ------------------------------------------------------------------ */
 const fromPanel = (e) =>
-  (panelWin && e.sender === panelWin.webContents) || (indicatorWin && e.sender === indicatorWin.webContents);
+  (panelWin && e.sender === panelWin.webContents) || (indicatorWin && e.sender === indicatorWin.webContents) ||
+  (consentWin && e.sender === consentWin.webContents);
 
 const ENROLL_ERRORS = {
   invalid_credentials: 'Wrong email or password.',
@@ -514,7 +558,10 @@ const ENROLL_ERRORS = {
   too_many_attempts: 'Too many attempts. Wait a few minutes and try again.',
 };
 
+const SAFE_DURING_SESSION = new Set(['endSession', 'copy']);
+
 const actions = {
+  async consentReply() {},
   async setServer({ url }) {
     const next = normalizeServerUrl(url);
     if (next === cfg.serverUrl) return;
@@ -599,6 +646,16 @@ const actions = {
 ipcMain.handle('panel:state', (e) => (fromPanel(e) ? fullState() : null));
 ipcMain.handle('panel:action', async (e, name, payload) => {
   if (!fromPanel(e) || !Object.hasOwn(actions, name)) return { ok: false, error: 'Not allowed.' };
+  if (name === 'consentReply') {
+    if (consentWin && e.sender === consentWin.webContents && consentDone) consentDone(!!(payload && payload.allow));
+    return { ok: true };
+  }
+  // While someone is connected, their clicks look exactly like local ones. Refuse anything that
+  // would give them a way back in later (adding this computer to an account, setting an access
+  // password, changing the server) or let them hop onward to another machine.
+  if (state.session && !SAFE_DURING_SESSION.has(name)) {
+    return { ok: false, error: 'Not available while someone is connected. End the session first.' };
+  }
   try {
     await actions[name](payload || {});
     broadcast();
@@ -623,6 +680,7 @@ app.on('activate', showPanel);
 app.whenReady().then(() => {
   if (process.platform === 'win32') app.setAppUserModelId('com.silicode.shackle');
   loadConfig();
+  loadHistory();
   applyOptions();
   createTray();
   createEngine();

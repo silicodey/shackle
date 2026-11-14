@@ -15,6 +15,7 @@ let support = null; // { password, salt, iter, key }: one-time credentials for a
 let supportFailures = 0;
 let session = null;
 let requestPending = false;
+let recentRequests = [];
 const lockout = { fails: [], until: 0 };
 
 const QUALITY = {
@@ -126,7 +127,13 @@ async function onRequest(msg) {
       creds = cfg.unattended;
     } else {
       if (!support) return reject('busy');
-      if (!(await T.confirmSession(msg.viewer))) return reject('declined');
+      // Flood guard: a stranger hammering this ID cannot keep the app busy indefinitely.
+      const t = Date.now();
+      recentRequests = recentRequests.filter((x) => t - x < 60_000);
+      if (recentRequests.length >= 6) return reject('busy');
+      recentRequests.push(t);
+      // No prompt yet: the person at this computer is only asked AFTER the caller has proven
+      // they know the password, so strangers guessing IDs can never make a prompt appear.
       creds = support;
     }
     send({ type: 'session-response', sessionId: msg.sessionId, accept: true });
@@ -231,6 +238,16 @@ async function onControl(s, msg) {
       return challenge(s);
     }
 
+    if (s.kind === 'support') {
+      s.verifying = true;
+      s.consenting = true;
+      ctrl(s, { t: 'awaiting-consent' });
+      const allowed = await T.confirmSession(s.viewer);
+      s.consenting = false;
+      s.verifying = false;
+      if (session !== s) return;
+      if (!allowed) return endSession('declined');
+    }
     s.authed = true;
     lockout.fails = [];
     ctrl(s, { t: 'auth-ok', proof: hostProof });
@@ -380,6 +397,7 @@ function endSession(reason, notifyServer = true) {
   if (notifyServer) send({ type: 'session-end', sessionId: s.id, reason });
   s.stream?.getTracks().forEach((t) => t.stop());
   setTimeout(() => { try { s.pc.close(); } catch {} }, 150);
+  if (s.consenting) T.cancelConfirm();
   if (s.authed) T.setSession(null);
   // Support credentials are single use: rotate after any real session or repeated wrong guesses.
   if (s.kind === 'support' && (s.authed || supportFailures >= 5)) {

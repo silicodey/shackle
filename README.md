@@ -1,6 +1,8 @@
 # Shackle
 
-Self-hosted remote desktop. Control your Windows and Mac computers from any browser, through a server you run yourself. No accounts with a third party, no session limits, no licence checks.
+Free, open-source remote desktop for Windows and Mac. Install it on two computers and connect with an ID and password, or run your own server and reach your machines from any browser. No session limits, no licence checks.
+
+Downloads and the landing page: https://shackle.silicode.co · Security notes: [SECURITY.md](SECURITY.md) · Licence: MIT
 
 ## What is in this repository
 
@@ -9,6 +11,8 @@ Self-hosted remote desktop. Control your Windows and Mac computers from any brow
 | `server/` | Node.js server: accounts, device list, connection setup (signaling), and the web client it serves. One dependency (`ws`), SQLite storage built into Node. |
 | `server/public/` | The browser client: dashboard and remote viewer. Plain HTML/CSS/JS, no build step. |
 | `host/` | The installable app (Electron) for the computer being controlled. Captures the screen, applies mouse and keyboard input. |
+| `site/` | The landing page (static; deploy the folder to Cloudflare Pages). |
+| `brand/` | Logo sources. |
 | `test/e2e.mjs` | End-to-end test: real server, real host app, real Chrome. |
 | `docker-compose.yml` | Server + automatic HTTPS (Caddy) + TURN relay (coturn). |
 | `.github/workflows/build.yml` | Runs the tests and builds the Windows installer and macOS disk image. |
@@ -93,7 +97,7 @@ Without a TURN relay, connections work when a direct path exists (same network, 
 
 ## Build the host app
 
-Installers are built by GitHub Actions on every push: open the latest run under **Actions** and download `shackle-windows` or `shackle-macos`. Pushing a tag like `v1.0.0` also attaches them to a release.
+Installers are built by GitHub Actions on every push. Pushing a tag like `v1.2.0` publishes them as a release with fixed file names (`Shackle-Setup-Windows.exe`, `Shackle-Mac-arm64.dmg`, `Shackle-Mac-x64.dmg`, `SHA256SUMS.txt`), which is what the landing page links to.
 
 To bake in your server address so users never type it, set `defaultServerUrl` in `host/shackle.config.json` before building.
 
