@@ -97,7 +97,7 @@ Without a TURN relay, connections work when a direct path exists (same network, 
 
 ## Build the host app
 
-Installers are built by GitHub Actions on every push. Pushing a tag like `v1.2.0` publishes them as a release with fixed file names (`Shackle-Setup-Windows.exe`, `Shackle-Mac-arm64.dmg`, `Shackle-Mac-x64.dmg`, `SHA256SUMS.txt`), which is what the landing page links to.
+Installers are built by GitHub Actions on every push. Raising the version number in `host/package.json` publishes them as a release with fixed file names (`Shackle-Setup-Windows.exe`, `Shackle-Mac-arm64.dmg`, `Shackle-Mac-x64.dmg`, `SHA256SUMS.txt`), which is what the landing page links to.
 
 To bake in your server address so users never type it, set `defaultServerUrl` in `host/shackle.config.json` before building.
 

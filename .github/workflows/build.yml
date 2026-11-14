@@ -3,7 +3,6 @@ name: build
 on:
   push:
     branches: [main]
-    tags: ["v*"]
   pull_request:
   workflow_dispatch:
 
@@ -63,18 +62,35 @@ jobs:
           path: host/dist/*.dmg
           if-no-files-found: error
 
+  # Publishes a release the first time a new version number (host/package.json) lands on main.
   release:
-    if: startsWith(github.ref, 'refs/tags/v')
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
     needs: [test, windows, macos]
     runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
     steps:
+      - uses: actions/checkout@v4
+      - name: Decide
+        id: v
+        run: |
+          VERSION=$(node -p "require('./host/package.json').version")
+          echo "tag=v$VERSION" >> "$GITHUB_OUTPUT"
+          if gh release view "v$VERSION" >/dev/null 2>&1; then echo "exists=true" >> "$GITHUB_OUTPUT"; else echo "exists=false" >> "$GITHUB_OUTPUT"; fi
       - uses: actions/download-artifact@v4
+        if: steps.v.outputs.exists == 'false'
         with:
           path: artifacts
           merge-multiple: true
       - name: Checksums
+        if: steps.v.outputs.exists == 'false'
         run: cd artifacts && sha256sum Shackle-* > SHA256SUMS.txt && cat SHA256SUMS.txt
       - uses: softprops/action-gh-release@v2
+        if: steps.v.outputs.exists == 'false'
         with:
+          tag_name: ${{ steps.v.outputs.tag }}
+          target_commitish: ${{ github.sha }}
+          name: Shackle ${{ steps.v.outputs.tag }}
           files: artifacts/*
           generate_release_notes: true
+          make_latest: true
