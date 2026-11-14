@@ -1,7 +1,7 @@
 {
   "name": "shackle-host",
   "productName": "Shackle",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "private": true,
   "description": "Shackle host: lets this computer be viewed and controlled through your own Shackle server",
   "author": "Silicode",

@@ -13,7 +13,7 @@ import {
 } from './util.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const VERSION = '1.2.0';
+const VERSION = '1.2.1';
 
 const cfg = {
   port: Number(process.env.PORT || 8080),
