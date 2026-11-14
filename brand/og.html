@@ -1,0 +1,41 @@
+<!doctype html>
+<!-- Source for site/og.png (1200x630). Render: node brand/render-og.mjs -->
+<meta charset="utf-8">
+<style>
+  * { box-sizing: border-box; margin: 0; }
+  html, body { width: 1200px; height: 630px; }
+  body {
+    font-family: "Inter Display", Inter, system-ui, sans-serif; color: #eceff3; overflow: hidden; position: relative;
+    background:
+      radial-gradient(760px 520px at 86% 46%, rgba(109, 255, 176, 0.17), transparent 70%),
+      radial-gradient(700px 400px at 8% -10%, rgba(109, 255, 176, 0.10), transparent 70%),
+      #07090b;
+  }
+  .grid { position: absolute; inset: 0; background: linear-gradient(#20252d 1px, transparent 1px) 0 -1px / 100% 70px; -webkit-mask-image: linear-gradient(180deg, #000, transparent 85%); opacity: 0.8; }
+  .copy { position: absolute; left: 76px; top: 0; bottom: 0; width: 700px; display: flex; flex-direction: column; justify-content: center; }
+  .brand { display: flex; align-items: center; gap: 14px; font-size: 32px; font-weight: 700; letter-spacing: -0.02em; }
+  .brand svg { width: 46px; height: 46px; filter: drop-shadow(0 0 14px rgba(109, 255, 176, 0.55)); }
+  h1 { margin-top: 44px; white-space: nowrap; font-size: 86px; line-height: 0.98; letter-spacing: -0.045em; font-weight: 750; }
+  h1 em { font-style: normal; color: #6dffb0; text-shadow: 0 0 44px rgba(109, 255, 176, 0.45); }
+  .sub { margin-top: 32px; font-family: Inter, sans-serif; font-size: 29px; line-height: 1.35; color: #9aa2b0; letter-spacing: -0.01em; }
+  .meta { margin-top: 44px; display: flex; align-items: center; gap: 16px; font: 600 19px/1 "DejaVu Sans Mono", monospace; letter-spacing: 0.06em; }
+  .pill { display: inline-flex; align-items: center; gap: 10px; text-transform: uppercase; color: #6dffb0; border: 1px solid rgba(109, 255, 176, 0.32); background: rgba(109, 255, 176, 0.06); border-radius: 99px; padding: 12px 18px; }
+  .pill i { width: 9px; height: 9px; border-radius: 50%; background: #6dffb0; box-shadow: 0 0 12px #6dffb0; }
+  .url { color: #8b93a1; letter-spacing: 0.02em; }
+  .art { position: absolute; right: 64px; top: 50%; width: 372px; height: 358px; transform: translateY(-50%); filter: drop-shadow(0 0 46px rgba(109, 255, 176, 0.35)); }
+</style>
+<div class="grid"></div>
+<svg class="art" viewBox="6 7 52 50" fill="none">
+  <rect x="9" y="10" width="31" height="24" rx="6.500" stroke="#6dffb0" stroke-opacity=".4" stroke-width="2.600"/>
+  <path d="M41.500 29H49a6.500 6.500 0 0 1 6.500 6.500V47.500A6.500 6.500 0 0 1 49 54H30.500A6.500 6.500 0 0 1 24 47.500V40.500" stroke="#6dffb0" stroke-width="2.600" stroke-linecap="round"/>
+  <path d="M18.500 17.500l14.200 5.400-5.900 2.400-2.400 5.900z" fill="#6dffb0" stroke="#6dffb0" stroke-width="2.200" stroke-linejoin="round"/>
+</svg>
+<div class="copy">
+  <div class="brand">
+    <svg viewBox="6 7 52 50" fill="none"><rect x="9" y="10" width="31" height="24" rx="6.500" stroke="#6dffb0" stroke-opacity=".4" stroke-width="3.600"/><path d="M41.500 29H49a6.500 6.500 0 0 1 6.500 6.500V47.500A6.500 6.500 0 0 1 49 54H30.500A6.500 6.500 0 0 1 24 47.500V40.500" stroke="#6dffb0" stroke-width="3.600" stroke-linecap="round"/><path d="M18.500 17.500l14.200 5.400-5.900 2.400-2.400 5.900z" fill="#6dffb0" stroke="#6dffb0" stroke-width="2.200" stroke-linejoin="round"/></svg>
+    Shackle
+  </div>
+  <h1>Two computers.<br><em>One screen.</em></h1>
+  <p class="sub">Free, open-source remote desktop<br>for Windows and Mac.</p>
+  <div class="meta"><span class="pill"><i></i>No account · No time limits</span><span class="url">shackle.silicode.co</span></div>
+</div>
