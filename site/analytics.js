@@ -60,7 +60,7 @@
       gtag('event', 'app_download', {
         file_name: file,
         download_os: FILES[file],
-        placement: a.id === 'dl-main' ? 'main_button' : 'alt_link',
+        placement: a.id === 'dl-main' ? 'main_button' : a.classList.contains('dl-main') ? 'closing_button' : 'alt_link',
         visitor_platform: platform()
       });
     } else if (file === 'SHA256SUMS.txt') {

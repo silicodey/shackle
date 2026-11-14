@@ -114,7 +114,7 @@ To run from source: `cd host && npm ci && npm start`.
 
 - Visitors are asked first. Nothing is requested from Google and no cookie is set until they click Allow. Browsers sending Global Privacy Control or Do Not Track are treated as a decline. The footer link lets a visitor change their choice.
 - GA4 reports page views, unique visitors, referrer, country, device and outbound clicks by itself.
-- Download clicks are sent as the event `app_download` with the parameters `download_os` (`windows`, `mac-arm64`, `mac-x64`), `file_name`, `placement` (`main_button` or `alt_link`) and `visitor_platform`. Checksum clicks are sent as `checksums_click`. To break reports down by those parameters, register them under Admin > Custom definitions in GA4.
+- Download clicks are sent as the event `app_download` with the parameters `download_os` (`windows`, `mac-arm64`, `mac-x64`), `file_name`, `placement` (`main_button`, `closing_button` or `alt_link`) and `visitor_platform`. Checksum clicks are sent as `checksums_click`. To break reports down by those parameters, register them under Admin > Custom definitions in GA4.
 - These are clicks by visitors who allowed analytics, not completed downloads. The exact number of installer downloads is the `download_count` of each file in the GitHub Releases API (`https://api.github.com/repos/silicodey/shackle/releases`).
 
 ## Tests
