@@ -4,7 +4,7 @@
 // browser sends Global Privacy Control or Do Not Track are treated as having declined.
 (function () {
   // Your GA4 measurement ID (Admin > Data streams > Web). Analytics stays off while this is empty.
-  var GA_ID = '';
+  var GA_ID = 'G-Q0YD9HWRHN';
   // Ask before measuring. Required for visitors in the EU/UK; set to false only if you are sure
   // you do not need consent, in which case measuring starts on page load.
   var REQUIRE_CONSENT = true;
