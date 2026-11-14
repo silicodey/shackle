@@ -71,8 +71,10 @@ h3 { font-size: 17px; font-weight: 640; letter-spacing: -0.01em; margin-bottom: 
     var(--bg);
 }
 .foot-inner { max-width: 1040px; margin: 0 auto; padding: 56px 24px 44px; display: grid; gap: 14px; }
-.silicode { justify-self: start; color: var(--text); text-decoration: none; font-size: 25px; font-weight: 500; letter-spacing: 0.16em; }
-.silicode:hover { color: var(--accent); text-shadow: 0 0 24px rgba(109, 255, 176, 0.5); }
+.foot-brand { display: flex; align-items: center; gap: 12px; color: var(--text); font-size: 25px; font-weight: 500; letter-spacing: 0.16em; }
+.foot-brand img { filter: drop-shadow(0 0 12px rgba(109, 255, 176, 0.5)); }
+.foot p a { color: var(--text); }
+.foot p a:hover { color: var(--accent); }
 .foot p { max-width: 440px; color: var(--muted); font-size: 15px; }
 .foot .copy { margin-top: 22px; padding-top: 22px; border-top: 1px solid var(--line); max-width: none; font-size: 13px; }
 .foot-band {
