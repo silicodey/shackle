@@ -15,5 +15,8 @@ services:
         sync: false
       - key: SECRET_KEY
         generateValue: true
+      # SHA-256 fingerprints of the Android app's signing certificates, comma-separated (see README).
+      - key: ANDROID_APP_FINGERPRINTS
+        sync: false
       - key: DATA_DIR
         value: /tmp/shackle

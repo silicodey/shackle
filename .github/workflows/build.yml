@@ -62,10 +62,45 @@ jobs:
           path: host/dist/*.dmg
           if-no-files-found: error
 
+  # Android app (shows the server's phone page full screen). Always compiles; produces the signed
+  # files for the store only when the signing secrets are set (see README).
+  android:
+    runs-on: ubuntu-latest
+    env:
+      KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+      ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+      ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+      ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - name: Compile
+        working-directory: android
+        run: ./gradlew --no-daemon assembleDebug
+      - name: Signed app bundle and APK
+        if: env.KEYSTORE_B64 != ''
+        working-directory: android
+        run: |
+          echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/shackle.jks"
+          export ANDROID_KEYSTORE_FILE="$RUNNER_TEMP/shackle.jks"
+          ./gradlew --no-daemon bundleRelease assembleRelease -PversionCode=${{ github.run_number }}
+          mkdir -p out
+          cp app/build/outputs/bundle/release/app-release.aab out/Shackle-Android.aab
+          cp app/build/outputs/apk/release/app-release.apk out/Shackle-Android.apk
+          rm "$RUNNER_TEMP/shackle.jks"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: shackle-android
+          path: android/out/*
+          if-no-files-found: ignore
+
   # Publishes a release the first time a new version number (host/package.json) lands on main.
   release:
     if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
-    needs: [test, windows, macos]
+    needs: [test, windows, macos, android]
     runs-on: ubuntu-latest
     env:
       GH_TOKEN: ${{ github.token }}

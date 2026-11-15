@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The Shackle mark (brand/mark.svg), scaled into the adaptive icon's safe zone. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp" android:height="108dp"
+    android:viewportWidth="108" android:viewportHeight="108">
+    <group android:scaleX="0.95" android:scaleY="0.95" android:translateX="23.6" android:translateY="23.6">
+        <path
+            android:pathData="M15.5,10H33.5a6.5,6.5 0 0 1 6.5,6.5V27.5a6.5,6.5 0 0 1 -6.5,6.5H15.5a6.5,6.5 0 0 1 -6.5,-6.5V16.5a6.5,6.5 0 0 1 6.5,-6.5z"
+            android:strokeColor="#6DFFB0" android:strokeAlpha="0.4" android:strokeWidth="3.6" />
+        <path
+            android:pathData="M41.5,29H49a6.5,6.5 0 0 1 6.5,6.5V47.5A6.5,6.5 0 0 1 49,54H30.5A6.5,6.5 0 0 1 24,47.5V40.5"
+            android:strokeColor="#6DFFB0" android:strokeWidth="3.6" android:strokeLineCap="round" />
+        <path
+            android:pathData="M18.5,17.5l14.2,5.4 -5.9,2.4 -2.4,5.9z"
+            android:fillColor="#6DFFB0" android:strokeColor="#6DFFB0" android:strokeWidth="2.2" android:strokeLineJoin="round" />
+    </group>
+</vector>

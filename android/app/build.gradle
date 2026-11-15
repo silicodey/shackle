@@ -1,0 +1,54 @@
+// Shackle for Android: a thin app that shows the server's phone page full screen
+// (a Trusted Web Activity). All behaviour lives on the server, so the app rarely needs updating.
+plugins {
+    id 'com.android.application'
+}
+
+// The server the app opens. Override with -PshackleHost=remote.example.com for your own server.
+def host = project.findProperty('shackleHost') ?: 'shackle.onrender.com'
+def appVersion = new groovy.json.JsonSlurper().parse(file('../../host/package.json')).version
+def keystore = System.getenv('ANDROID_KEYSTORE_FILE')
+
+android {
+    namespace 'co.silicode.shackle'
+    compileSdk 36
+
+    defaultConfig {
+        applicationId 'co.silicode.shackle'
+        minSdk 26
+        targetSdk 36
+        versionCode((project.findProperty('versionCode') ?: '1') as int)
+        versionName appVersion
+        manifestPlaceholders = [hostName: host]
+        resValue 'string', 'launch_url', "https://${host}/connect.html"
+        resValue 'string', 'asset_statements',
+            '[{ \\"relation\\": [\\"delegate_permission/common.handle_all_urls\\"], \\"target\\": { \\"namespace\\": \\"web\\", \\"site\\": \\"https://' + host + '\\" } }]'
+    }
+
+    signingConfigs {
+        release {
+            if (keystore) {
+                storeFile file(keystore)
+                storePassword System.getenv('ANDROID_KEYSTORE_PASSWORD')
+                keyAlias System.getenv('ANDROID_KEY_ALIAS')
+                keyPassword System.getenv('ANDROID_KEY_PASSWORD')
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            if (keystore) signingConfig signingConfigs.release
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+dependencies {
+    implementation 'com.google.androidbrowserhelper:androidbrowserhelper:2.6.0'
+}

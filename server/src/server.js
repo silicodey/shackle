@@ -13,7 +13,7 @@ import {
 } from './util.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const VERSION = '1.2.1';
+const VERSION = '1.3.1';
 
 const cfg = {
   port: Number(process.env.PORT || 8080),
@@ -391,6 +391,19 @@ const SECURITY_HEADERS = {
     "connect-src 'self' ws: wss:; frame-ancestors 'none'; base-uri 'none'; form-action 'self'",
 };
 
+// Digital Asset Links: tells Android that the Shackle app (signed with these certificates) may
+// show this site full screen. ANDROID_APP_FINGERPRINTS is a comma-separated list of SHA-256
+// certificate fingerprints (from Play Console > App integrity, plus the upload key's).
+function assetLinks() {
+  const prints = String(process.env.ANDROID_APP_FINGERPRINTS || '').split(',')
+    .map((f) => f.trim().toUpperCase()).filter((f) => /^([0-9A-F]{2}:){31}[0-9A-F]{2}$/.test(f));
+  if (!prints.length) return [];
+  return [{
+    relation: ['delegate_permission/common.handle_all_urls'],
+    target: { namespace: 'android_app', package_name: process.env.ANDROID_APP_PACKAGE || 'co.silicode.shackle', sha256_cert_fingerprints: prints },
+  }];
+}
+
 function serveStatic(req, res, url) {
   let rel = decodeURIComponent(url.pathname);
   if (rel === '/') rel = '/index.html';
@@ -422,6 +435,7 @@ const server = http.createServer(async (req, res) => {
   }
   try {
     if (url.pathname === '/healthz') return send(res, 200, { ok: true, version: VERSION });
+    if (url.pathname === '/.well-known/assetlinks.json') return send(res, 200, assetLinks());
     if (url.pathname.startsWith('/api/')) return await handleApi(req, res, url);
     if (req.method !== 'GET' && req.method !== 'HEAD') return send(res, 405, { error: 'method_not_allowed' });
     return serveStatic(req, res, url);
