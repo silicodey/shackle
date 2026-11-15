@@ -42,7 +42,7 @@ try {
   let setupCode = null;
   server = spawn(process.execPath, ['--disable-warning=ExperimentalWarning', 'src/server.js'], {
     cwd: path.join(root, 'server'),
-    env: { ...process.env, PORT: String(PORT), DATA_DIR: path.join(tmp, 'data'), STUN_URLS: '' },
+    env: { ...process.env, PORT: String(PORT), DATA_DIR: path.join(tmp, 'data'), STUN_URLS: '', ANDROID_APP_FINGERPRINTS: `not-a-fingerprint, ${Array(32).fill('ab').join(':')}` },
   });
   server.stdout.on('data', (d) => {
     const m = /setup code:\s+(\S+)/.exec(String(d));
@@ -97,6 +97,17 @@ try {
     const ws = new WebSocket(`ws://127.0.0.1:${PORT}/ws?role=viewer`);
     const opened = await new Promise((r) => { ws.onopen = () => r(true); ws.onerror = () => r(false); });
     assert(!opened, 'viewer socket opened without a session');
+  });
+
+  await step('installable app: manifest, icons, offline page and app link file are served', async () => {
+    const m = await (await fetch(`${URL}/manifest.webmanifest`)).json();
+    assert(m.start_url === '/connect.html' && m.icons.length === 3, 'bad manifest');
+    for (const i of m.icons) assert((await fetch(URL + i.src)).status === 200, `missing ${i.src}`);
+    for (const f of ['/sw.js', '/offline.html', '/pwa.js']) assert((await fetch(URL + f)).status === 200, `missing ${f}`);
+    const links = await fetch(`${URL}/.well-known/assetlinks.json`);
+    assert(links.status === 200 && links.headers.get('content-type').includes('application/json'), 'asset links not served as JSON');
+    const body = await links.json();
+    assert(body.length === 1 && body[0].target.package_name === 'co.silicode.shackle' && body[0].target.sha256_cert_fingerprints.length === 1, `asset links: ${JSON.stringify(body)}`);
   });
 
   /* ---------- host app ---------- */

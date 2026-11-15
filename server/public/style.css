@@ -186,6 +186,8 @@ dialog form > p.muted { margin-bottom: 18px; }
 /* ── phones and touch ── */
 .auth-alt { margin-top: 18px; text-align: center; }
 .guest-foot { margin-top: 18px; }
+a.btn { display: inline-block; text-align: center; text-decoration: none; color: var(--text); }
+a.btn.primary { color: var(--accent-ink); }
 .stage { touch-action: none; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
 .stage video { transform-origin: 0 0; will-change: transform; }
 /* The on-screen keyboard box: focusable (so phones open their keyboard) but out of sight. */

@@ -1,0 +1,8 @@
+<resources>
+    <!-- Dark window while the page loads, so there is no white flash. -->
+    <style name="Theme.Shackle" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@color/bg</item>
+        <item name="android:statusBarColor">@color/bg</item>
+        <item name="android:navigationBarColor">@color/bg</item>
+    </style>
+</resources>

@@ -101,6 +101,7 @@ Server settings (environment variables):
 | `TRUST_PROXY` | off | Set to `1` behind a reverse proxy |
 | `STUN_URLS` | Google public STUN | Comma-separated; empty string disables |
 | `TURN_URLS`, `TURN_SECRET` | none | Your coturn relay and its shared secret |
+| `ANDROID_APP_FINGERPRINTS` | none | Certificate fingerprints of the Android app (see Android app) |
 
 Without a TURN relay, connections work when a direct path exists (same network, or ordinary home routers) and fail across strict corporate or mobile networks.
 
@@ -125,6 +126,23 @@ To run from source: `cd host && npm ci && npm start`.
 - GA4 reports page views, unique visitors, referrer, country, device and outbound clicks by itself.
 - Download clicks are sent as the event `app_download` with the parameters `download_os` (`windows`, `mac-arm64`, `mac-x64`), `file_name`, `placement` (`main_button`, `closing_button` or `alt_link`) and `visitor_platform`. Checksum clicks are sent as `checksums_click`. To break reports down by those parameters, register them under Admin > Custom definitions in GA4.
 - These are clicks by visitors who allowed analytics, not completed downloads. The exact number of installer downloads is the `download_count` of each file in the GitHub Releases API (`https://api.github.com/repos/silicodey/shackle/releases`).
+
+## Android app
+
+`android/` is a small Android app that shows the server's connect page full screen (a Trusted Web Activity). Everything it does lives on the server, so server updates reach it without a new app version. It needs Chrome or another browser that supports Trusted Web Activities on the phone.
+
+GitHub Actions compiles it on every push. With these repository secrets set, it also builds the signed `Shackle-Android.aab` (for Google Play) and `Shackle-Android.apk`, and attaches them to each release:
+
+| Secret | Value |
+| --- | --- |
+| `ANDROID_KEYSTORE_BASE64` | The signing keystore file, base64 encoded |
+| `ANDROID_KEYSTORE_PASSWORD` | Its password |
+| `ANDROID_KEY_ALIAS` | The key's alias, e.g. `shackle` |
+| `ANDROID_KEY_PASSWORD` | The key's password |
+
+For the app to open without a browser bar, the server must vouch for it: set `ANDROID_APP_FINGERPRINTS` on the server to the SHA-256 certificate fingerprints of the app, comma-separated (in Play Console: Test and release > App integrity > App signing; include both the app signing key and the upload key). The server then publishes them at `/.well-known/assetlinks.json`.
+
+To build for your own server: `cd android && ./gradlew assembleRelease -PshackleHost=remote.example.com`, and change `applicationId` in `android/app/build.gradle`.
 
 ## Tests
 
