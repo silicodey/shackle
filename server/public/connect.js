@@ -65,6 +65,8 @@ if (ticket) {
     $('guest-error').textContent = '';
     code = entered;
     guest.hidden = true;
+    // Phones: use the whole screen for the remote picture (needs this tap; ignored where unsupported).
+    if (window.matchMedia('(pointer: coarse)').matches) document.documentElement.requestFullscreen?.().catch(() => {});
     openSession({
       target: { code },
       role: 'guest',

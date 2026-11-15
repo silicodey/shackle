@@ -276,7 +276,45 @@ try {
     assert(!opened, 'guest socket opened without the server\'s Origin');
   });
 
-  await step('phone: connects by ID and password with touch, keyboard and pinch-zoom', async () => {
+  // Phone helpers: real touch sequences through the browser's touch pipeline (CDP), so the page
+  // sees genuine pointer events with pointerType "touch", one or two fingers.
+  const phoneTools = async (phone, phoneCtx) => {
+    const cdp = await phoneCtx.newCDPSession(phone);
+    const touch = (type, pts) => cdp.send('Input.dispatchTouchEvent', { type, touchPoints: pts.map((p, id) => ({ x: p.x, y: p.y, id })) });
+    const stageMid = async () => phone.evaluate(() => {
+      const r = document.getElementById('stage').getBoundingClientRect();
+      return { x: r.left + r.width / 2, y: r.top + r.height * 0.45 };
+    });
+    const tapAt = async (p) => { await touch('touchStart', [p]); await sleep(40); await touch('touchEnd', []); };
+    const swipe = async (from, dx, dy, steps, stepMs) => {
+      await touch('touchStart', [from]);
+      for (let i = 1; i <= steps; i++) {
+        await sleep(stepMs);
+        await touch('touchMove', [{ x: from.x + (dx * i) / steps, y: from.y + (dy * i) / steps }]);
+      }
+      await sleep(stepMs);
+      await touch('touchEnd', []);
+    };
+    const twoFinger = async (mid, gap, dx, dy, steps, stepMs, endGap = gap) => {
+      const pts = (k) => {
+        const g = gap + ((endGap - gap) * k) / steps;
+        return [{ x: mid.x - g / 2 + (dx * k) / steps, y: mid.y + (dy * k) / steps }, { x: mid.x + g / 2 + (dx * k) / steps, y: mid.y + (dy * k) / steps }];
+      };
+      await touch('touchStart', pts(0));
+      for (let k = 1; k <= steps; k++) { await sleep(stepMs); await touch('touchMove', pts(k)); }
+      await sleep(stepMs);
+      await touch('touchEnd', []);
+    };
+    const picture = () => phone.evaluate(() => {
+      const v = document.getElementById('video');
+      const r = v.getBoundingClientRect();
+      const sc = Math.min(r.width / v.videoWidth, r.height / v.videoHeight);
+      return { w: v.videoWidth * sc, h: v.videoHeight * sc };
+    });
+    return { touch, stageMid, tapAt, swipe, twoFinger, picture };
+  };
+
+  await step('phone: connects by ID and password; touchpad mode with a visible cursor', async () => {
     const phoneCtx = await browser.newContext({ ...devices['Pixel 7'] });
     const phone = await phoneCtx.newPage();
     phone.on('console', (m) => m.type() === 'error' && consoleErrors.push(`[phone] ${m.text()}`));
@@ -296,63 +334,224 @@ try {
       await panel.waitForSelector('#session:not([hidden])');
       const who = await panel.textContent('#session-viewer');
       assert(who === 'A web browser (no Shackle account)', `host shows "${who}"`);
-      await sleep(800);
+      assert(await phone.isVisible('.dock'), 'control dock not shown');
+      assert(await phone.isHidden('#bar'), 'desktop toolbar shown on the phone');
+      await phone.waitForSelector('.tcursor:not([hidden])');
+
+      const T = await phoneTools(phone, phoneCtx);
+      const display = await app.evaluate(({ screen }) => screen.getPrimaryDisplay().bounds);
+      const hostNorm = async () => { const h = await hostCursor(); return { x: h.x / display.width, y: h.y / display.height }; };
+      const near = (a, b, tol = 0.012) => Math.abs(a.x - b.x) <= tol && Math.abs(a.y - b.y) <= tol;
+      const overlayNorm = () => phone.evaluate(() => {
+        const v = document.getElementById('video');
+        const r = v.getBoundingClientRect();
+        const sc = Math.min(r.width / v.videoWidth, r.height / v.videoHeight);
+        const w = v.videoWidth * sc, h = v.videoHeight * sc;
+        const px = r.left + (r.width - w) / 2, py = r.top + (r.height - h) / 2;
+        const sr = document.getElementById('stage').getBoundingClientRect();
+        const m = /translate\(([-\d.]+)px, ([-\d.]+)px\)/.exec(document.querySelector('.tcursor').style.transform);
+        return { x: (sr.left + Number(m[1]) - px) / w, y: (sr.top + Number(m[2]) - py) / h };
+      });
+
+      // The session starts with the cursor in the middle of the remote screen.
+      await sleep(400);
+      assert(near(await hostNorm(), { x: 0.5, y: 0.5 }), `cursor did not start centred: ${JSON.stringify(await hostNorm())}`);
+
+      // Sliding a finger anywhere moves the cursor relative to where it was; drawn cursor and real one agree.
+      const mid = await T.stageMid();
+      await T.swipe({ x: mid.x - 60, y: mid.y + 40 }, 90, -45, 30, 25);
+      await sleep(400);
+      const after = await hostNorm();
+      assert(after.x > 0.6 && after.y < 0.45, `cursor did not follow the finger: ${JSON.stringify(after)}`);
+      assert(near(after, await overlayNorm(), 0.01), 'drawn cursor and remote cursor disagree');
+
+      // Quick flicks travel further than slow strokes over the same distance (pointer acceleration).
+      const before = await hostNorm();
+      await T.swipe(mid, -60, 0, 30, 25); // slow
+      await sleep(300);
+      const slow = before.x - (await hostNorm()).x;
+      const before2 = await hostNorm();
+      await T.swipe(mid, -60, 0, 4, 8); // fast
+      await sleep(300);
+      const fast = before2.x - (await hostNorm()).x;
+      assert(fast > slow * 1.5, `no acceleration: slow ${slow.toFixed(3)}, fast ${fast.toFixed(3)}`);
+
+      // Put the cursor on a harmless spot of the host window and record what arrives there.
+      const moveTo = async (target) => {
+        const pic = await T.picture();
+        for (let i = 0; i < 6; i++) {
+          const h = await hostNorm();
+          if (near(h, target, 0.004)) return;
+          const dx = ((target.x - h.x) * pic.w) / 0.75, dy = ((target.y - h.y) * pic.h) / 0.75;
+          const steps = Math.max(2, Math.ceil(Math.hypot(dx, dy) / 2.5));
+          await T.swipe(mid, dx, dy, steps, 22);
+          await sleep(250);
+        }
+        assert(near(await hostNorm(), target, 0.006), `could not place the cursor at ${JSON.stringify(target)}: ${JSON.stringify(await hostNorm())}`);
+      };
+      const spot = async (selector, fx = 0.5) => {
+        const r = await panel.evaluate(([sel, f]) => {
+          const el = document.querySelector(sel);
+          el.scrollIntoView({ block: 'center' });
+          const b = el.getBoundingClientRect();
+          return { x: b.left + b.width * f, y: b.top + b.height / 2 };
+        }, [selector, fx]);
+        const bounds = await app.evaluate(({ BrowserWindow }) =>
+          BrowserWindow.getAllWindows().find((x) => x.webContents.getURL().endsWith('panel.html')).getContentBounds());
+        return { x: (bounds.x + r.x) / display.width, y: (bounds.y + r.y) / display.height };
+      };
+      await panel.evaluate(() => {
+        window.__ev = [];
+        const log = (e) => window.__ev.push(e.type === 'wheel' ? ['wheel', Math.sign(e.deltaY)] : [e.type, e.button ?? null]);
+        for (const t of ['mousedown', 'click', 'dblclick', 'contextmenu']) window.addEventListener(t, log, true);
+        window.addEventListener('wheel', log, { capture: true, passive: true });
+      });
+      const events = () => panel.evaluate(() => window.__ev.splice(0));
+      await moveTo(await spot('#session-viewer', 0.25));
+      await events();
+
+      await T.tapAt(mid);
+      await sleep(500);
+      let ev = await events();
+      assert(ev.some(([t, b]) => t === 'click' && b === 0), `tap did not click: ${JSON.stringify(ev)}`);
+      assert(near(await hostNorm(), await spot('#session-viewer', 0.25), 0.006), 'tap moved the cursor');
+
+      await T.tapAt(mid); await sleep(90); await T.tapAt(mid);
+      await sleep(500);
+      ev = await events();
+      assert(ev.some(([t]) => t === 'dblclick'), `double tap did not double-click: ${JSON.stringify(ev)}`);
+      await sleep(400);
+
+      await T.twoFinger(mid, 70, 0, 0, 2, 30);
+      await sleep(500);
+      ev = await events();
+      assert(ev.some(([t, b]) => t === 'contextmenu' || (t === 'mousedown' && b === 2)), `two-finger tap did not right-click: ${JSON.stringify(ev)}`);
+      await panel.keyboard.press('Escape').catch(() => {});
+
+      await T.twoFinger(mid, 70, 0, -120, 12, 25); // fingers slide up: content scrolls down
+      await sleep(900);
+      ev = await events();
+      const wheels = ev.filter(([t]) => t === 'wheel');
+      assert(wheels.length > 0 && wheels.every(([, d]) => d > 0), `two-finger scroll: ${JSON.stringify(ev)}`);
+      assert(near(await hostNorm(), await spot('#session-viewer', 0.25), 0.006), 'scrolling moved the cursor');
+
       await phone.screenshot({ path: path.join(tmp, 'phone-viewer.png') });
 
-      // Tap moves the pointer and clicks.
-      const display = await app.evaluate(({ screen }) => screen.getPrimaryDisplay().bounds);
-      const p1 = await videoPoint(0.3, 0.4, phone);
-      await phone.touchscreen.tap(p1.x, p1.y);
-      await sleep(500);
-      const cur = await hostCursor();
-      assert(Math.abs(cur.x - 0.3 * display.width) <= 6 && Math.abs(cur.y - 0.4 * display.height) <= 6, `cursor at ${cur.x},${cur.y}`);
-
-      // Tap a host text field, then type with the on-screen keyboard.
+      // Typing: click into a host text field, open the keyboard, type, Backspace, and Ctrl+A from the key strip.
       await panel.click('[data-tab=settings]');
-      const target = await panel.evaluate(() => {
-        const el = document.querySelector('#server-form input');
-        el.scrollIntoView({ block: 'center' });
-        const r = el.getBoundingClientRect();
-        return { x: r.left + r.width - 12, y: r.top + r.height / 2 };
-      });
-      const bounds = await app.evaluate(({ BrowserWindow }) =>
-        BrowserWindow.getAllWindows().find((x) => x.webContents.getURL().endsWith('panel.html')).getContentBounds());
-      const p2 = await videoPoint((bounds.x + target.x) / display.width, (bounds.y + target.y) / display.height, phone);
-      await phone.touchscreen.tap(p2.x, p2.y);
-      await sleep(500);
-      await phone.tap('#v-kbd');
+      await moveTo(await spot('#server-form input', 0.92));
+      await T.tapAt(mid);
+      await sleep(400);
+      await phone.tap('.dock-kbd');
       assert(await phone.evaluate(() => document.activeElement.id === 'kbd'), 'keyboard box not focused');
+      assert(await phone.isVisible('.keystrip'), 'special-key strip not shown while typing');
+      await phone.screenshot({ path: path.join(tmp, 'phone-typing.png') });
       await phone.keyboard.press('End');
       await phone.keyboard.insertText('/phone x');
       await phone.keyboard.press('Backspace');
       await phone.keyboard.press('Backspace');
       await phone.keyboard.insertText('-ok');
       await sleep(900);
-      const value = await panel.inputValue('#server-form input');
+      let value = await panel.inputValue('#server-form input');
       assert(value === `${URL}/phone-ok`, `host field contains "${value}"`);
+      await phone.tap('.keystrip button:has-text("Ctrl")');
+      assert(await phone.evaluate(() => document.activeElement.id === 'kbd'), 'key strip took the focus (keyboard would close)');
+      await phone.keyboard.insertText('a');
+      await phone.keyboard.insertText('replaced');
+      await sleep(900);
+      value = await panel.inputValue('#server-form input');
+      assert(value === 'replaced', `Ctrl+A then typing gave "${value}"`);
+      assert(!(await phone.$('.keystrip button.on')), 'Ctrl stayed held after one key');
       await panel.fill('#server-form input', URL);
       await panel.click('[data-tab=remote]');
-      await phone.tap('#v-kbd');
+      await phone.tap('.dock-kbd');
+      await sleep(200);
 
-      // Pinch with two fingers zooms the picture on the phone only.
-      const cdp = await phoneCtx.newCDPSession(phone);
-      const mid = await videoPoint(0.5, 0.5, phone);
-      const touch = (type, d) => cdp.send('Input.dispatchTouchEvent', {
-        type, touchPoints: d == null ? [] : [{ x: mid.x - d, y: mid.y, id: 0 }, { x: mid.x + d, y: mid.y, id: 1 }],
+      // Pinch zooms the picture; moving the cursor towards an edge slides the zoomed view along.
+      const m2 = await T.stageMid();
+      await T.twoFinger(m2, 60, 0, 0, 10, 25, 200);
+      const scale = await phone.evaluate(() => Number((/scale\(([\d.]+)\)/.exec(document.getElementById('video').style.transform) || [0, 1])[1]));
+      assert(scale > 2, `pinch did not zoom (scale ${scale})`);
+      assert(await phone.isVisible('.dock-fit'), 'fit button not offered while zoomed');
+      const tx0 = await phone.evaluate(() => document.getElementById('video').style.transform);
+      await T.swipe(m2, 160, 0, 40, 20);
+      await sleep(300);
+      const tx1 = await phone.evaluate(() => document.getElementById('video').style.transform);
+      assert(tx0 !== tx1, 'zoomed view did not follow the cursor');
+      const o = await phone.evaluate(() => {
+        const c = document.querySelector('.tcursor').getBoundingClientRect();
+        const s = document.getElementById('stage').getBoundingClientRect();
+        return c.left > s.left && c.left < s.right;
       });
-      await touch('touchStart', 30);
-      for (const d of [45, 60, 80, 100]) { await touch('touchMove', d); await sleep(30); }
-      await touch('touchEnd');
-      const transform = await phone.evaluate(() => document.getElementById('video').style.transform);
-      assert(/scale\((2\.|3\.)/.test(transform), `video transform after pinch: "${transform}"`);
+      assert(o, 'cursor left the visible area while zoomed');
       await phone.screenshot({ path: path.join(tmp, 'phone-zoomed.png') });
+      await phone.tap('.dock-fit');
+      assert(await phone.evaluate(() => document.getElementById('video').style.transform === ''), 'fit did not reset the zoom');
 
-      // The tools panel holds the rest; Disconnect returns to the form.
-      await phone.tap('#v-more');
-      await phone.waitForSelector('#v-tools #v-end', { state: 'visible' });
-      await phone.screenshot({ path: path.join(tmp, 'phone-tools.png') });
+      // Touch mode: tap exactly where to click.
+      await phone.tap('.dock-mode');
+      assert(await phone.isHidden('.tcursor'), 'cursor still drawn in touch mode');
+      const target = { x: 0.3, y: 0.4 };
+      const vp = await videoPoint(target.x, target.y, phone);
+      await T.tapAt(vp);
+      await sleep(500);
+      assert(near(await hostNorm(), target, 0.01), `touch-mode tap landed at ${JSON.stringify(await hostNorm())}`);
+      await phone.tap('.dock-mode'); // back to touchpad, remembered for next time
+
+      // The menu holds the rest; Disconnect returns to the form.
+      await phone.tap('.dock-menu');
+      await phone.waitForSelector('#v-end', { state: 'visible' });
+      await phone.screenshot({ path: path.join(tmp, 'phone-menu.png') });
       await phone.tap('#v-end');
       await phone.waitForSelector('#guest:not([hidden])');
+      await panel.waitForSelector('#session', { state: 'hidden' });
+      assert(!(await phone.$('.dock')), 'dock left behind after the session');
+    } finally {
+      await phoneCtx.close();
+    }
+  });
+
+  await step('phone: landscape layout puts the controls at the side', async () => {
+    const phoneCtx = await browser.newContext({ ...devices['Pixel 7 landscape'] });
+    const phone = await phoneCtx.newPage();
+    phone.on('pageerror', (e) => consoleErrors.push(`[phone-landscape] ${e.message}`));
+    try {
+      await sleep(1500); // the one-time ID and password rotate after the previous session
+      const c = await creds();
+      await phone.goto(`${URL}/connect.html`);
+      await phone.fill('#guest-form input[name=code]', c.code);
+      await phone.fill('#guest-form input[name=password]', c.pass);
+      await phone.tap('#guest-form button');
+      await phone.waitForSelector('#stage.live', { timeout: 30_000 });
+      await phone.waitForFunction(() => document.getElementById('video').videoWidth > 0, null, { timeout: 20_000 });
+      await sleep(600);
+      const layout = await phone.evaluate(() => {
+        const d = document.querySelector('.dock').getBoundingClientRect();
+        return { vertical: d.height > d.width, right: innerWidth - d.right, fits: d.top >= 0 && d.bottom <= innerHeight };
+      });
+      assert(layout.vertical && layout.right < 40 && layout.fits, `landscape dock: ${JSON.stringify(layout)}`);
+      await phone.screenshot({ path: path.join(tmp, 'phone-landscape.png') });
+      await phone.tap('.dock-menu');
+      await phone.screenshot({ path: path.join(tmp, 'phone-landscape-menu.png') });
+      const fits = await phone.evaluate(() => {
+        const bar = document.getElementById('bar');
+        const b = bar.getBoundingClientRect();
+        return b.top >= 0 && b.bottom <= innerHeight + 1 && bar.scrollHeight <= bar.clientHeight + 1;
+      });
+      assert(fits, 'menu does not fit on a landscape screen without scrolling');
+
+      // Android Back: first closes the menu, then asks again before disconnecting.
+      await phone.goBack({ waitUntil: 'commit' }).catch(() => {});
+      await sleep(300);
+      assert(!(await phone.evaluate(() => document.getElementById('viewer').classList.contains('menu-open'))), 'Back did not close the menu');
+      // (Chrome's Back skips history entries the page added with no touch since, so touch as a user would.)
+      await phone.tap('.dock', { position: { x: 30, y: 2 } });
+      await sleep(400);
+      await phone.goBack({ waitUntil: 'commit' }).catch(() => {});
+      await sleep(500);
+      assert(await phone.isVisible('#stage.live'), 'one Back press dropped the session');
+      assert((await phone.textContent('#toasts')).includes('Press Back again'), 'no warning before disconnecting');
+      await phone.goBack({ waitUntil: 'commit' }).catch(() => {});
       await panel.waitForSelector('#session', { state: 'hidden' });
     } finally {
       await phoneCtx.close();

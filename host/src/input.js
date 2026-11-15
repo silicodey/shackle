@@ -110,8 +110,10 @@ async function apply(ev) {
     case 'combo': {
       const keys = (Array.isArray(ev.codes) ? ev.codes.slice(0, 5) : []).map(keyFor).filter((k) => k !== undefined);
       if (!keys.length) return;
+      // Same order for both calls: the input library treats the last key as the main key and the
+      // others as modifiers. (Reversing the release left the main key held down.)
       await keyboard.pressKey(...keys);
-      return keyboard.releaseKey(...keys.reverse());
+      return keyboard.releaseKey(...keys);
     }
     case 'text': {
       // Characters from a phone's on-screen keyboard, which does not report physical keys.

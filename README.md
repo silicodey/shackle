@@ -38,7 +38,12 @@ Three ways to connect:
 
 - **From a phone or any browser.** Open `https://your-server/connect.html` (on the public server, the main button of the landing page does this on a phone), type the computer's ID and password, and the person there clicks Allow. No app or account needed. The host app on the computer needs version 1.3.0 or newer for typing from a phone.
 
-On a touch screen: tap to click, hold to right-click, drag with one finger to drag, two fingers to scroll, pinch to zoom (while zoomed, two fingers pan), and the Keyboard button opens the phone's keyboard. The other tools sit under More.
+On a phone or tablet the picture fills the screen and a small dock floats over it: keyboard, right-click, mouse mode, fit to screen and a menu with the other tools. Two mouse modes:
+
+- **Touchpad** (default): the screen works like a laptop touchpad. Slide anywhere to move the cursor (slow strokes are precise, quick flicks go far), tap to click, double-tap to double-click, tap then touch again and slide to drag, two-finger tap to right-click.
+- **Touch**: tap exactly where you want to click, hold to right-click, drag to drag.
+
+In both: two fingers scroll (with momentum), pinch zooms (in touchpad mode the zoomed view follows the cursor). While the phone keyboard is open, a strip adds Esc, Tab, Ctrl, Alt, Win/⌘, arrows and Delete; Ctrl, Alt and Win stay held for the next key, so Ctrl then C sends Ctrl+C. The screen stays on during a session, and Android's Back button asks for a second press before disconnecting.
 
 During a session: live screen, mouse, keyboard, monitor switching, quality presets, clipboard in both directions, file transfer in both directions (up to 2 GB), full-screen mode with system-key capture.
 
