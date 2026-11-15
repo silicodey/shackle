@@ -10,7 +10,7 @@ import { fileURLToPath } from 'node:url';
 
 const require = createRequire(import.meta.url);
 const pwPath = process.env.PLAYWRIGHT_PATH || 'playwright';
-const { chromium, _electron: electron } = require(pwPath);
+const { chromium, devices, _electron: electron } = require(pwPath);
 
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'shackle-e2e-'));
@@ -268,6 +268,95 @@ try {
     await join(firstCreds.code, firstCreds.pass);
     await page.waitForFunction(() => document.getElementById('v-status').textContent.includes('No computer is waiting'));
     await page.click('#v-cancel');
+  });
+
+  await step('phone: a browser without an account must come from the server\'s own page', async () => {
+    const ws = new WebSocket(`ws://127.0.0.1:${PORT}/ws?role=guest`);
+    const opened = await new Promise((r) => { ws.onopen = () => r(true); ws.onerror = () => r(false); });
+    assert(!opened, 'guest socket opened without the server\'s Origin');
+  });
+
+  await step('phone: connects by ID and password with touch, keyboard and pinch-zoom', async () => {
+    const phoneCtx = await browser.newContext({ ...devices['Pixel 7'] });
+    const phone = await phoneCtx.newPage();
+    phone.on('console', (m) => m.type() === 'error' && consoleErrors.push(`[phone] ${m.text()}`));
+    phone.on('pageerror', (e) => consoleErrors.push(`[phone] ${e.message}`));
+    try {
+      await page.goto(URL); // the desktop viewer stays signed in but idle
+      const c = await creds();
+      await phone.goto(`${URL}/connect.html`);
+      await phone.waitForSelector('#guest:not([hidden])');
+      await phone.screenshot({ path: path.join(tmp, 'phone-form.png') });
+      await phone.fill('#guest-form input[name=code]', c.code);
+      assert((await phone.inputValue('#guest-form input[name=code]')) === c.code.replace(/(\d{3})(?=\d)/g, '$1 '), 'ID not grouped');
+      await phone.fill('#guest-form input[name=password]', c.pass);
+      await phone.tap('#guest-form button');
+      await phone.waitForSelector('#stage.live', { timeout: 30_000 });
+      await phone.waitForFunction(() => document.getElementById('video').videoWidth > 0, null, { timeout: 20_000 });
+      await panel.waitForSelector('#session:not([hidden])');
+      const who = await panel.textContent('#session-viewer');
+      assert(who === 'A web browser (no Shackle account)', `host shows "${who}"`);
+      await sleep(800);
+      await phone.screenshot({ path: path.join(tmp, 'phone-viewer.png') });
+
+      // Tap moves the pointer and clicks.
+      const display = await app.evaluate(({ screen }) => screen.getPrimaryDisplay().bounds);
+      const p1 = await videoPoint(0.3, 0.4, phone);
+      await phone.touchscreen.tap(p1.x, p1.y);
+      await sleep(500);
+      const cur = await hostCursor();
+      assert(Math.abs(cur.x - 0.3 * display.width) <= 6 && Math.abs(cur.y - 0.4 * display.height) <= 6, `cursor at ${cur.x},${cur.y}`);
+
+      // Tap a host text field, then type with the on-screen keyboard.
+      await panel.click('[data-tab=settings]');
+      const target = await panel.evaluate(() => {
+        const el = document.querySelector('#server-form input');
+        el.scrollIntoView({ block: 'center' });
+        const r = el.getBoundingClientRect();
+        return { x: r.left + r.width - 12, y: r.top + r.height / 2 };
+      });
+      const bounds = await app.evaluate(({ BrowserWindow }) =>
+        BrowserWindow.getAllWindows().find((x) => x.webContents.getURL().endsWith('panel.html')).getContentBounds());
+      const p2 = await videoPoint((bounds.x + target.x) / display.width, (bounds.y + target.y) / display.height, phone);
+      await phone.touchscreen.tap(p2.x, p2.y);
+      await sleep(500);
+      await phone.tap('#v-kbd');
+      assert(await phone.evaluate(() => document.activeElement.id === 'kbd'), 'keyboard box not focused');
+      await phone.keyboard.press('End');
+      await phone.keyboard.insertText('/phone x');
+      await phone.keyboard.press('Backspace');
+      await phone.keyboard.press('Backspace');
+      await phone.keyboard.insertText('-ok');
+      await sleep(900);
+      const value = await panel.inputValue('#server-form input');
+      assert(value === `${URL}/phone-ok`, `host field contains "${value}"`);
+      await panel.fill('#server-form input', URL);
+      await panel.click('[data-tab=remote]');
+      await phone.tap('#v-kbd');
+
+      // Pinch with two fingers zooms the picture on the phone only.
+      const cdp = await phoneCtx.newCDPSession(phone);
+      const mid = await videoPoint(0.5, 0.5, phone);
+      const touch = (type, d) => cdp.send('Input.dispatchTouchEvent', {
+        type, touchPoints: d == null ? [] : [{ x: mid.x - d, y: mid.y, id: 0 }, { x: mid.x + d, y: mid.y, id: 1 }],
+      });
+      await touch('touchStart', 30);
+      for (const d of [45, 60, 80, 100]) { await touch('touchMove', d); await sleep(30); }
+      await touch('touchEnd');
+      const transform = await phone.evaluate(() => document.getElementById('video').style.transform);
+      assert(/scale\((2\.|3\.)/.test(transform), `video transform after pinch: "${transform}"`);
+      await phone.screenshot({ path: path.join(tmp, 'phone-zoomed.png') });
+
+      // The tools panel holds the rest; Disconnect returns to the form.
+      await phone.tap('#v-more');
+      await phone.waitForSelector('#v-tools #v-end', { state: 'visible' });
+      await phone.screenshot({ path: path.join(tmp, 'phone-tools.png') });
+      await phone.tap('#v-end');
+      await phone.waitForSelector('#guest:not([hidden])');
+      await panel.waitForSelector('#session', { state: 'hidden' });
+    } finally {
+      await phoneCtx.close();
+    }
   });
 
   await step('unattended: enroll this computer from the host panel', async () => {

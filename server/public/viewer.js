@@ -38,6 +38,7 @@ const KEY_COMBOS = [
 ];
 
 let active = null;
+const TOUCH = window.matchMedia('(pointer: coarse)').matches;
 
 /**
  * @param {{target: {deviceId?: string, code?: string}, password: string|null, name: string,
@@ -76,7 +77,11 @@ class Session {
 
     const scheme = location.protocol === 'https:' ? 'wss:' : 'ws:';
     const ticket = this.opts.ticket ? `&ticket=${encodeURIComponent(this.opts.ticket)}` : '';
-    this.ws = new WebSocket(`${scheme}//${location.host}/ws?role=viewer${ticket}`);
+    const role = this.opts.role === 'guest' ? 'guest' : 'viewer';
+    this.ws = new WebSocket(`${scheme}//${location.host}/ws?role=${role}${ticket}`);
+    this.ws.onerror = () => {
+      if (!this.live && !this.closed && role === 'guest') this.finish('The server refused the connection. Wait a few minutes and try again.');
+    };
     this.ws.onopen = () => this.sig({ type: 'connect', ...this.opts.target });
     this.ws.onmessage = (e) => this.onSignal(JSON.parse(e.data)).catch((err) => this.fail(err.message));
     this.ws.onclose = () => {
@@ -116,6 +121,8 @@ class Session {
     }, 50);
     navigator.keyboard?.unlock?.();
     $('video').srcObject = null;
+    this.resetZoom?.();
+    $('kbd').blur();
     if (message) {
       $('v-dot').className = 'dot off';
       this.status(message, true);
@@ -129,6 +136,7 @@ class Session {
     this.abort.abort();
     if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
     $('viewer').hidden = true;
+    $('viewer').classList.remove('tools-open');
     $('toasts').replaceChildren();
     active = null;
     this.opts.onClose(null);
@@ -276,6 +284,7 @@ class Session {
     $('stage').classList.add('live');
     $('stage').focus();
     this.statsTimer = setInterval(() => this.updateStats(), 2000);
+    if (TOUCH) this.toast('Tap to click, hold to right-click, drag to drag. Two fingers scroll, pinch to zoom.');
   }
 
   setScreens(screens, current) {
@@ -330,15 +339,16 @@ class Session {
         pendingMove = null;
       }
     };
+    this.bindTouch(on, stage, point);
     on(stage, 'pointermove', (e) => {
-      if (!this.live) return;
+      if (!this.live || e.pointerType === 'touch') return;
       const p = point(e);
       if (!p) return;
       if (!pendingMove) requestAnimationFrame(flushMove);
       pendingMove = p;
     });
     on(stage, 'pointerdown', (e) => {
-      if (!this.live) return;
+      if (!this.live || e.pointerType === 'touch') return;
       stage.focus();
       const p = point(e);
       if (!p) return;
@@ -348,7 +358,7 @@ class Session {
       this.send({ t: 'd', b: e.button, ...p });
     });
     on(stage, 'pointerup', (e) => {
-      if (!this.live) return;
+      if (!this.live || e.pointerType === 'touch') return;
       const p = point(e);
       if (!p) return;
       e.preventDefault();
@@ -364,13 +374,16 @@ class Session {
     }, { passive: false });
 
     const inBar = (e) => e.target instanceof Element && e.target.closest('.bar, dialog');
+    // Keys typed into the on-screen keyboard box arrive as text (see bindKeyboard); only keys that
+    // produce no text, such as arrows, Tab or Escape, are forwarded from it as key presses.
+    const fromKbd = (e) => e.target === $('kbd') && (e.isComposing || e.keyCode === 229 || e.key.length === 1 || e.key === 'Backspace' || e.key === 'Enter' || e.key === 'Unidentified');
     on(window, 'keydown', (e) => {
-      if (!this.live || inBar(e)) return;
+      if (!this.live || inBar(e) || fromKbd(e)) return;
       e.preventDefault();
       if (e.code) this.send({ t: 'k', c: e.code, d: 1 });
     });
     on(window, 'keyup', (e) => {
-      if (!this.live || inBar(e)) return;
+      if (!this.live || inBar(e) || fromKbd(e)) return;
       e.preventDefault();
       if (e.code) this.send({ t: 'k', c: e.code, d: 0 });
     });
@@ -418,6 +431,17 @@ class Session {
       stage.focus();
     });
 
+    this.bindKeyboard(on);
+    on($('v-more'), 'click', () => {
+      const open = $('viewer').classList.toggle('tools-open');
+      $('v-more').setAttribute('aria-expanded', String(open));
+    });
+    // Close the tools panel after picking something in it.
+    on($('v-tools'), 'click', (e) => {
+      if (e.target.closest('button')) $('viewer').classList.remove('tools-open');
+    });
+    $('v-full').hidden = !document.documentElement.requestFullscreen; // not available on iPhone
+
     on($('v-full'), 'click', async () => {
       if (document.fullscreenElement) return document.exitFullscreen();
       await $('viewer').requestFullscreen().catch(() => {});
@@ -430,6 +454,166 @@ class Session {
       if (!document.fullscreenElement) navigator.keyboard?.unlock?.();
     });
     on($('viewer'), 'mousemove', (e) => $('bar').classList.toggle('peek', e.clientY < 6));
+  }
+
+  /* ───────────── touch ───────────── */
+  // One finger acts as the mouse at the point touched: tap to click, hold to right-click, drag to
+  // drag. Two fingers scroll, or pinch to zoom the picture locally; while zoomed, two fingers pan.
+  bindTouch(on, stage, point) {
+    const video = $('video');
+    const touches = new Map();
+    const zoom = { s: 1, x: 0, y: 0 };
+    let one = null;   // single-finger gesture
+    let two = null;   // two-finger gesture
+    let lastWheel = null;
+
+    const apply = () => {
+      const r = stage.getBoundingClientRect();
+      zoom.s = Math.min(5, Math.max(1, zoom.s));
+      zoom.x = Math.min(0, Math.max(r.width - r.width * zoom.s, zoom.x));
+      zoom.y = Math.min(0, Math.max(r.height - r.height * zoom.s, zoom.y));
+      video.style.transform = zoom.s === 1 ? '' : `translate(${zoom.x}px, ${zoom.y}px) scale(${zoom.s})`;
+    };
+    this.resetZoom = () => { zoom.s = 1; zoom.x = 0; zoom.y = 0; apply(); };
+    const local = (t) => {
+      const r = stage.getBoundingClientRect();
+      return { x: t.x - r.left, y: t.y - r.top };
+    };
+    const click = (p, b) => {
+      this.send({ t: 'm', ...p });
+      this.send({ t: 'd', b, ...p });
+      this.send({ t: 'u', b, ...p });
+    };
+
+    on(stage, 'pointerdown', (e) => {
+      if (!this.live || e.pointerType !== 'touch') return;
+      e.preventDefault();
+      stage.focus();
+      try { stage.setPointerCapture(e.pointerId); } catch {}
+      touches.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (touches.size === 1) {
+        const p = point(e);
+        if (!p) return;
+        one = { id: e.pointerId, sx: e.clientX, sy: e.clientY, p, dragging: false, held: false };
+        one.timer = setTimeout(() => {
+          if (!one || one.dragging) return;
+          one.held = true;
+          navigator.vibrate?.(15);
+          click(one.p, 2);
+        }, 550);
+      } else if (touches.size === 2) {
+        // A second finger turns this into a scroll or zoom; finish any one-finger action first.
+        if (one) {
+          clearTimeout(one.timer);
+          if (one.dragging) this.send({ t: 'u', b: 0, ...one.p });
+          one = null;
+        }
+        const [a, b] = [...touches.values()];
+        const mid = local({ x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 });
+        two = { d0: Math.hypot(a.x - b.x, a.y - b.y) || 1, s0: zoom.s, x0: zoom.x, y0: zoom.y, mid0: mid, mode: null };
+        lastWheel = mid;
+      }
+    }, { passive: false });
+
+    on(stage, 'pointermove', (e) => {
+      if (!this.live || e.pointerType !== 'touch' || !touches.has(e.pointerId)) return;
+      e.preventDefault();
+      touches.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (one && one.id === e.pointerId) {
+        const p = point(e);
+        if (!p) return;
+        if (!one.dragging && !one.held && Math.hypot(e.clientX - one.sx, e.clientY - one.sy) > 10) {
+          clearTimeout(one.timer);
+          one.dragging = true;
+          this.send({ t: 'm', ...one.p });
+          this.send({ t: 'd', b: 0, ...one.p });
+        }
+        one.p = p;
+        if (one.dragging) this.send({ t: 'm', ...p });
+      } else if (two && touches.size === 2) {
+        const [a, b] = [...touches.values()];
+        const d = Math.hypot(a.x - b.x, a.y - b.y);
+        const mid = local({ x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 });
+        if (!two.mode) {
+          if (Math.abs(d / two.d0 - 1) > 0.12) two.mode = 'zoom';
+          else if (Math.hypot(mid.x - two.mid0.x, mid.y - two.mid0.y) > 12) two.mode = zoom.s > 1 ? 'zoom' : 'scroll';
+        }
+        if (two.mode === 'zoom') {
+          // Keep the spot under the fingers' midpoint under them while zooming and panning.
+          const s = Math.min(5, Math.max(1, two.s0 * (d / two.d0)));
+          const cx = (two.mid0.x - two.x0) / two.s0;
+          const cy = (two.mid0.y - two.y0) / two.s0;
+          zoom.s = s;
+          zoom.x = mid.x - cx * s;
+          zoom.y = mid.y - cy * s;
+          apply();
+        } else if (two.mode === 'scroll') {
+          const dx = lastWheel.x - mid.x, dy = lastWheel.y - mid.y;
+          if (Math.abs(dx) + Math.abs(dy) >= 4) {
+            this.send({ t: 'w', dx: Math.round(dx * 3), dy: Math.round(dy * 3) });
+            lastWheel = mid;
+          }
+        }
+      }
+    }, { passive: false });
+
+    const end = (e) => {
+      if (e.pointerType !== 'touch' || !touches.has(e.pointerId)) return;
+      touches.delete(e.pointerId);
+      if (one && one.id === e.pointerId) {
+        clearTimeout(one.timer);
+        if (this.live && e.type === 'pointerup') {
+          if (one.dragging) this.send({ t: 'u', b: 0, ...one.p });
+          else if (!one.held) click(one.p, 0);
+        } else if (one.dragging) {
+          this.send({ t: 'u', b: 0, ...one.p });
+        }
+        one = null;
+      }
+      if (touches.size < 2) two = null;
+    };
+    on(stage, 'pointerup', end);
+    on(stage, 'pointercancel', end);
+  }
+
+  /* ───────────── on-screen keyboard ───────────── */
+  // Phone keyboards do not report physical keys, so a hidden text box collects what is typed and
+  // sends it as text. It always holds one placeholder character, so Backspace has something to
+  // delete even when the box looks empty.
+  bindKeyboard(on) {
+    const box = $('kbd');
+    const MARK = ' ';
+    let composing = false;
+    const reset = () => {
+      box.value = MARK;
+      box.setSelectionRange(1, 1);
+    };
+    const flush = () => {
+      if (composing || !this.live) return;
+      const v = box.value;
+      if (v === MARK) return;
+      if (v === '') {
+        this.send({ t: 'combo', codes: ['Backspace'] });
+      } else {
+        const typed = v.startsWith(MARK) ? v.slice(1) : v;
+        const parts = typed.split('\n');
+        parts.forEach((part, i) => {
+          if (part) this.send({ t: 'text', s: part });
+          if (i < parts.length - 1) this.send({ t: 'combo', codes: ['Enter'] });
+        });
+      }
+      reset();
+    };
+    on(box, 'compositionstart', () => { composing = true; });
+    on(box, 'compositionend', () => { composing = false; flush(); });
+    on(box, 'input', flush);
+    on(box, 'focus', () => { reset(); $('viewer').classList.add('typing'); });
+    on(box, 'blur', () => $('viewer').classList.remove('typing'));
+    on($('v-kbd'), 'click', () => {
+      if (document.activeElement === box) return box.blur();
+      reset();
+      box.focus();
+    });
   }
 
   /* ───────────── clipboard ───────────── */

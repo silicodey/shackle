@@ -9,9 +9,9 @@
   buttons.forEach(function (btn) {
     var label = btn.querySelector('.dl-label');
     if (isMobile) {
-      label.textContent = 'Download on a Windows PC or Mac';
-      btn.removeAttribute('href');
-      btn.classList.add('off');
+      // Phones need no app: they connect to a computer in the browser.
+      label.textContent = 'Control a computer from this phone';
+      btn.href = 'https://shackle.onrender.com/connect.html';
     } else if (isMac) {
       // Browsers on Apple-chip Macs still report "Intel", so default to Apple chip (every Mac since late 2020).
       btn.href = link('mac-arm');

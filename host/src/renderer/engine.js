@@ -263,7 +263,7 @@ async function onControl(s, msg) {
   }
 
   switch (msg.t) {
-    case 'm': case 'd': case 'u': case 'w': case 'k': case 'combo': case 'release':
+    case 'm': case 'd': case 'u': case 'w': case 'k': case 'combo': case 'release': case 'text':
       return T.input(msg, s.displayId);
     case 'clip':
       if (typeof msg.text === 'string') T.clipboardWrite(msg.text);

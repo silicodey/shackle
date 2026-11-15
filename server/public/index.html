@@ -31,6 +31,7 @@
         <p id="auth-error" class="error" role="alert"></p>
         <button class="btn primary wide" type="submit" id="auth-submit">Sign in</button>
       </form>
+      <p class="muted small auth-alt">No account? <a href="/connect.html">Connect with an ID and password</a></p>
     </div>
   </main>
 
@@ -139,7 +140,11 @@
         <strong id="v-name"></strong>
         <span class="muted small" id="v-stats"></span>
       </div>
-      <div class="bar-right">
+      <div class="bar-touch">
+        <button class="btn sm" id="v-kbd" type="button">Keyboard</button>
+        <button class="btn sm" id="v-more" type="button" aria-expanded="false" aria-controls="v-tools">More</button>
+      </div>
+      <div class="bar-right" id="v-tools">
         <select id="v-screen" title="Monitor" hidden></select>
         <select id="v-quality" title="Quality">
           <option value="balanced">Balanced</option>
@@ -167,6 +172,7 @@
     </div>
     <div class="toasts" id="toasts"></div>
     <input type="file" id="file-input" hidden>
+    <textarea id="kbd" class="kbd" aria-label="Type on the remote computer" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"></textarea>
   </div>
 
   <script type="module" src="/app.js"></script>

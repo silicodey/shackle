@@ -113,6 +113,12 @@ async function apply(ev) {
       await keyboard.pressKey(...keys);
       return keyboard.releaseKey(...keys.reverse());
     }
+    case 'text': {
+      // Characters from a phone's on-screen keyboard, which does not report physical keys.
+      const text = typeof ev.s === 'string' ? ev.s.replace(/\r\n?/g, '\n').slice(0, 2000) : '';
+      if (text) await keyboard.type(text);
+      return;
+    }
     case 'release': {
       for (const key of [...downKeys]) await keyboard.releaseKey(key).catch(() => {});
       for (const b of [...downButtons]) await mouse.releaseButton(b).catch(() => {});

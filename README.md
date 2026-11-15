@@ -36,6 +36,10 @@ Three ways to connect:
 - **Unattended access.** Install the host on your own computer, sign it in to your account once, set an access password. It then appears under "Your computers" in the web client whenever it is on.
 - **Support session.** The other person opens the host app and reads you the 9-digit ID and one-time password. They get an Allow/Decline prompt before you connect. The ID and password change after every session.
 
+- **From a phone or any browser.** Open `https://your-server/connect.html` (on the public server, the main button of the landing page does this on a phone), type the computer's ID and password, and the person there clicks Allow. No app or account needed. The host app on the computer needs version 1.3.0 or newer for typing from a phone.
+
+On a touch screen: tap to click, hold to right-click, drag with one finger to drag, two fingers to scroll, pinch to zoom (while zoomed, two fingers pan), and the Keyboard button opens the phone's keyboard. The other tools sit under More.
+
 During a session: live screen, mouse, keyboard, monitor switching, quality presets, clipboard in both directions, file transfer in both directions (up to 2 GB), full-screen mode with system-key capture.
 
 ## Security model
@@ -50,7 +54,7 @@ During a session: live screen, mouse, keyboard, monitor switching, quality prese
 Known limits of this design:
 
 - Someone who controls your server and intercepts a connection attempt could try to guess the password offline. Use a long access password (the app requires 10+ characters). A proper fix is a PAKE handshake, which is on the roadmap below.
-- Anyone with an account on your server can attempt support sessions. Only create accounts for people you trust.
+- Anyone who can open your server's web page can attempt support sessions, with or without an account. The host still checks the password and asks the person at the computer to click Allow, and attempts are limited per IP address and per computer.
 
 ## Run the server
 

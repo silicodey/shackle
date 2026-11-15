@@ -442,6 +442,7 @@ const server = http.createServer(async (req, res) => {
 /** @type {Map<string, {id: string, host: HostConn, viewer: any, kind: string, startedAt: number, accepted: boolean}>} */
 const sessions = new Map();
 const hostsPerIp = new Map();
+const guestsPerIp = new Map();
 // One-time tickets that let a Shackle app (no account) open a viewer connection for ID + password sessions.
 /** @type {Map<string, {code: string, name: string, exp: number}>} */ const tickets = new Map();
 
@@ -563,6 +564,7 @@ function handleViewerMessage(viewer, msg) {
       let host = null;
       let kind = 'unattended';
       if (msg.deviceId) {
+        if (viewer.guest) return wsSend(viewer.ws, { type: 'error', code: 'not_found' });
         const row = viewer.userId ? s.devGet.get(String(msg.deviceId)) : null;
         if (!row || row.user_id !== viewer.userId) return wsSend(viewer.ws, { type: 'error', code: 'not_found' });
         host = deviceHosts.get(row.id);
@@ -631,6 +633,21 @@ server.on('upgrade', (req, socket, head) => {
       const label = `Shackle ID ${t.code.replace(/(\d{3})(?=\d)/g, '$1 ')}`;
       const viewer = { ws, id: randomToken(6), ip, userId: null, email: label, fromCode: t.code, sessionId: null, alive: true };
       attach(ws, viewer, handleViewerMessage, () => {
+        if (viewer.sessionId) endSession(viewer.sessionId, 'viewer_disconnected', 'viewer');
+      });
+    });
+  } else if (role === 'guest') {
+    // Browser without an account (e.g. a phone) joining by ID + password. It can only make support
+    // connections: the host checks the password itself and the person there must click Allow.
+    if (!originAllowed(req)) return deny('403 Forbidden');
+    if ((guestsPerIp.get(ip) || 0) >= 5 || !limiter.hit(`guest:${ip}`, 30, 10 * 60_000)) return deny('429 Too Many Requests');
+    wss.handleUpgrade(req, socket, head, (ws) => {
+      guestsPerIp.set(ip, (guestsPerIp.get(ip) || 0) + 1);
+      // A fixed label: nothing the guest chooses is shown to the person asked for access.
+      const viewer = { ws, id: randomToken(6), ip, userId: null, email: 'A web browser (no Shackle account)', guest: true, sessionId: null, alive: true };
+      attach(ws, viewer, handleViewerMessage, () => {
+        const n = (guestsPerIp.get(ip) || 1) - 1;
+        if (n <= 0) guestsPerIp.delete(ip); else guestsPerIp.set(ip, n);
         if (viewer.sessionId) endSession(viewer.sessionId, 'viewer_disconnected', 'viewer');
       });
     });
