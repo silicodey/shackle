@@ -4,6 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="dark">
+  <meta name="theme-color" content="#0a0b0d">
   <title>Shackle: free, open-source remote desktop</title>
   <meta name="description" content="Control another computer, or let someone help with yours. Free and open source for Windows and Mac. No account, no time limits.">
   <meta property="og:title" content="Shackle: free, open-source remote desktop">
@@ -19,15 +20,15 @@
   <meta name="twitter:image" content="https://shackle.silicode.co/og.png">
   <link rel="icon" href="/icon.svg">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="preload" href="/fonts/geist-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="/style.css">
 </head>
 <body>
-  <div class="aurora" aria-hidden="true"><span></span><span></span><span></span></div>
-
   <header class="top">
-    <div class="top-inner">
-      <a class="brand" href="/"><img src="/mark.svg" alt="" width="28" height="28">Shackle</a>
+    <div class="wrap top-inner">
+      <a class="brand" href="/"><img src="/mark.svg" alt="" width="24" height="24">Shackle</a>
       <nav aria-label="Main">
+        <a class="nav-opt" href="#phone">Phone</a>
         <a class="nav-opt" href="#how">How it works</a>
         <a class="nav-opt" href="#features">Features</a>
         <a href="#security">Security</a>
@@ -41,34 +42,28 @@
   </header>
 
   <main>
-    <section class="hero">
-      <p class="tag reveal"><span class="pulse"></span>Free and open source<span class="tag-x"> · Windows &amp; Mac</span></p>
-      <h1 class="reveal">Two computers.<br><em>One screen.</em></h1>
-      <p class="lede reveal">Control another computer, or let someone you trust help with yours. No account, no time limits, no licence nagging.</p>
+    <div class="wrap hero">
+      <div class="hero-copy">
+        <h1><span>Two computers.</span> One screen.</h1>
+        <p class="lede">Control another computer, or let someone you trust help with yours. No account, no time limits, no licence nagging.</p>
 
-      <div class="download reveal" id="download">
-        <a class="btn primary dl-main" id="dl-main" href="https://github.com/silicodey/shackle/releases/latest/download/Shackle-Setup-Windows.exe">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11m0 0-4.500-4.500M12 15l4.500-4.500M5 19.500h14"/></svg>
-          <span class="dl-label" id="dl-label">Download for Windows</span>
-        </a>
-        <p class="alt" id="dl-alt">
-          Also for
-          <a data-os="win" href="https://github.com/silicodey/shackle/releases/latest/download/Shackle-Setup-Windows.exe">Windows</a>,
-          <a data-os="mac-arm" href="https://github.com/silicodey/shackle/releases/latest/download/Shackle-Mac-arm64.dmg">Mac (Apple chip)</a> and
-          <a data-os="mac-intel" href="https://github.com/silicodey/shackle/releases/latest/download/Shackle-Mac-x64.dmg">Mac (Intel)</a>.
-          <a href="https://github.com/silicodey/shackle/releases/latest/download/SHA256SUMS.txt">Checksums</a>
-        </p>
+        <div class="download" id="download">
+          <a class="btn primary dl-main" id="dl-main" href="https://github.com/silicodey/shackle/releases/latest/download/Shackle-Setup-Windows.exe">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11m0 0-4.500-4.500M12 15l4.500-4.500M5 19.500h14"/></svg>
+            <span class="dl-label" id="dl-label">Download for Windows</span>
+          </a>
+          <p class="alt" id="dl-alt">
+            Also for
+            <a data-os="win" href="https://github.com/silicodey/shackle/releases/latest/download/Shackle-Setup-Windows.exe">Windows</a>,
+            <a data-os="mac-arm" href="https://github.com/silicodey/shackle/releases/latest/download/Shackle-Mac-arm64.dmg">Mac (Apple chip)</a> and
+            <a data-os="mac-intel" href="https://github.com/silicodey/shackle/releases/latest/download/Shackle-Mac-x64.dmg">Mac (Intel)</a>.
+            <a href="https://github.com/silicodey/shackle/releases/latest/download/SHA256SUMS.txt">Checksums</a>
+          </p>
+        </div>
       </div>
 
-      <ul class="chips reveal" aria-label="At a glance">
-        <li>No account needed</li>
-        <li>No session limits</li>
-        <li>Encrypted peer to peer</li>
-        <li>MIT licence</li>
-      </ul>
-
       <!-- Security limits: shown in full, directly under the download link, on purpose. -->
-      <section class="limits reveal" id="security" aria-labelledby="limits-title">
+      <section class="limits" id="security" aria-labelledby="limits-title">
         <div class="limits-head">
           <svg class="limits-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 3.500 19.500h17L12 3Z"/><path d="M12 10v4m0 3h.01"/></svg>
           <div>
@@ -87,143 +82,164 @@
         </ul>
         <p class="limits-foot">What we do to reduce misuse: you approve every connection on screen, after the caller has already proven they know your password. A banner showing who is connected stays on top for the whole session. Passwords are single use. Settings that would let someone back in later are locked while anyone is connected. The app always shows its icon in the system tray while it is running. <a href="https://github.com/silicodey/shackle/blob/main/SECURITY.md">Full security notes</a></p>
       </section>
-    </section>
 
-    <figure class="shot reveal" id="shot">
-      <div class="window">
-        <div class="window-bar" aria-hidden="true"><i></i><i></i><i></i><span>Shackle</span></div>
-        <img src="/app.png" alt="The Shackle window: your ID and password on the left, a box for your partner's ID on the right" width="940" height="620" loading="lazy">
+      <div class="hero-visual">
+        <figure class="window">
+          <img src="/app.png" alt="The Shackle window: your ID and password on the left, a box for your partner's ID on the right" width="940" height="620">
+        </figure>
+        <figure class="phone-land">
+          <img src="/phone-land.webp" alt="A phone showing the other computer's screen, with the Shackle controls on its right edge" width="1200" height="626" loading="lazy">
+        </figure>
+        <svg class="pointer" viewBox="0 0 20 24" aria-hidden="true"><path d="M2 2l15 10.500-6.600 1.300L14.500 21l-3.200 1.500-4.100-7.200L2 19.500z"/></svg>
       </div>
-      <div class="float float-a" aria-hidden="true">
-        <span class="dot"></span>
-        <div><b>Allow connection?</b><small>You approve every session</small></div>
-      </div>
-      <div class="float float-b" aria-hidden="true">
-        <svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>
-        <div><b>Encrypted</b><small>Computer to computer</small></div>
-      </div>
-    </figure>
+    </div>
 
     <section class="section" aria-labelledby="ways-title">
-      <p class="eyebrow reveal">Three ways to connect</p>
-      <h2 class="section-title reveal" id="ways-title">Help someone, or reach your own machines</h2>
-      <div class="cards">
-        <article class="card spot reveal">
-          <div class="icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="4" width="9" height="7" rx="1.500"/><rect x="13" y="13" width="9" height="7" rx="1.500"/><path d="M6.500 11v3.500a2 2 0 0 0 2 2H13M17.500 13V9.500a2 2 0 0 0-2-2H11"/></svg></div>
-          <h3>App to app</h3>
-          <p>Both people install Shackle. Type the other computer's ID, then its password. The other person clicks Allow. No account needed.</p>
-        </article>
-        <article class="card spot reveal">
-          <div class="icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/><circle cx="12" cy="10" r="2"/></svg></div>
-          <h3>Unattended access</h3>
-          <p>Install the host on your own computer, sign it in to your account once and set an access password. It appears under "Your computers" in the web client whenever it is on.</p>
-        </article>
-        <article class="card spot reveal">
-          <div class="icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21a9 9 0 1 0-9-9c0 1.600.4 3.100 1.200 4.400L3 21l4.600-1.200A9 9 0 0 0 12 21Z"/><path d="M9 10h.01M12 10h.01M15 10h.01"/></svg></div>
-          <h3>Support session</h3>
-          <p>The other person reads you their 9-digit ID and one-time password and gets an Allow or Decline prompt. The ID and password change after every session.</p>
-        </article>
+      <div class="wrap">
+        <div class="section-head">
+          <h2 id="ways-title">Help someone, or reach your own machines</h2>
+        </div>
+        <div class="ways">
+          <article>
+            <h3>App to app</h3>
+            <p>Both people install Shackle. Type the other computer's ID, then its password. The other person clicks Allow. No account needed.</p>
+          </article>
+          <article>
+            <h3>Unattended access</h3>
+            <p>Install the host on your own computer, sign it in to your account once and set an access password. It appears under "Your computers" in the web client whenever it is on.</p>
+          </article>
+          <article>
+            <h3>Support session</h3>
+            <p>The other person reads you their 9-digit ID and one-time password and gets an Allow or Decline prompt. The ID and password change after every session.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="phone" aria-labelledby="phone-title">
+      <div class="wrap split">
+        <div class="split-copy">
+          <h2 id="phone-title">Control your computer from your phone</h2>
+          <p class="lede">Open the connect page in any phone browser, type the computer's ID and password, and the person at the computer clicks Allow. No app and no account.</p>
+          <ul class="rows">
+            <li><h3>Touchpad mode</h3><p>Slide anywhere to move the cursor, tap to click, two fingers to scroll, pinch to zoom.</p></li>
+            <li><h3>Touch mode</h3><p>Tap exactly where you want to click. Hold to right-click.</p></li>
+            <li><h3>The keys a phone lacks</h3><p>Esc, Tab, Ctrl, Alt, Win and the arrow keys sit above the keyboard.</p></li>
+          </ul>
+          <p class="note">Typing from a phone needs Shackle 1.3.0 or newer on the computer.</p>
+          <p><a class="text-link" href="https://shackle.onrender.com/connect.html">Open the connect page <span aria-hidden="true">→</span></a></p>
+        </div>
+        <figure class="phone-port">
+          <img src="/phone-port.webp" alt="A phone connected to a computer, with the keyboard shortcut row open above the keyboard" width="640" height="912" loading="lazy">
+        </figure>
       </div>
     </section>
 
     <section class="section" id="how" aria-labelledby="how-title">
-      <p class="eyebrow reveal">How it works</p>
-      <h2 class="section-title reveal" id="how-title">The server introduces.<br>The computers talk.</h2>
-      <p class="section-lede reveal">The Shackle server only sets up the connection. Screen, keyboard and files then travel directly between the two computers over encrypted WebRTC, through your own relay only when a direct path is impossible.</p>
-      <div class="diagram reveal" role="img" aria-label="Diagram: your computer and the remote computer both contact the Shackle server, then connect to each other directly and encrypted">
-        <svg viewBox="0 0 760 300" aria-hidden="true">
-          <path class="d-signal" d="M150 166 C 230 166, 290 70, 380 70"/>
-          <path class="d-signal" d="M610 166 C 530 166, 470 70, 380 70"/>
-          <path class="d-p2p" d="M206 210 L 554 210"/>
-          <circle class="d-packet" r="5"><animateMotion dur="3.200s" repeatCount="indefinite" path="M206 210 L 554 210"/></circle>
-          <circle class="d-packet" r="5"><animateMotion dur="3.200s" begin="1.600s" repeatCount="indefinite" path="M554 210 L 206 210"/></circle>
-          <circle class="d-ping" r="4"><animateMotion dur="2.400s" repeatCount="indefinite" path="M150 166 C 230 166, 290 70, 380 70"/></circle>
-          <circle class="d-ping" r="4"><animateMotion dur="2.400s" begin="1.200s" repeatCount="indefinite" path="M610 166 C 530 166, 470 70, 380 70"/></circle>
-          <g class="d-node d-server" transform="translate(380 70)">
-            <rect x="-96" y="-36" width="192" height="72" rx="16"/>
-            <text y="-4">Shackle server</text>
-            <text class="d-sub" y="17">never sees screen or input</text>
-          </g>
-          <g class="d-node" transform="translate(110 210)">
-            <rect x="-96" y="-44" width="192" height="88" rx="16"/>
-            <text y="-6">You</text>
-            <text class="d-sub" y="15">browser or Shackle app</text>
-          </g>
-          <g class="d-node" transform="translate(650 210)">
-            <rect x="-96" y="-44" width="192" height="88" rx="16"/>
-            <text y="-6">Remote computer</text>
-            <text class="d-sub" y="15">Shackle host app</text>
-          </g>
-          <g class="d-label" transform="translate(380 262)"><rect x="-150" y="-15" width="300" height="30" rx="15"/><text y="5">WebRTC · encrypted · peer to peer</text></g>
-        </svg>
+      <div class="wrap">
+        <div class="section-head">
+          <h2 id="how-title">The server introduces. The computers talk.</h2>
+          <p class="lede">The Shackle server only sets up the connection. Screen, keyboard and files then travel directly between the two computers over encrypted WebRTC, through your own relay only when a direct path is impossible.</p>
+        </div>
+        <div class="diagram" role="img" aria-label="Diagram: your computer and the remote computer both contact the Shackle server, then connect to each other directly and encrypted">
+          <svg class="d-wide" viewBox="0 0 760 280" aria-hidden="true">
+            <path class="d-link" d="M130 170 C130 112 200 64 290 64"/>
+            <path class="d-link" d="M630 170 C630 112 560 64 470 64"/>
+            <path class="d-direct" d="M220 202 L540 202"/>
+            <g class="d-box"><rect x="290" y="32" width="180" height="64" rx="10"/><text class="d-name" x="380" y="60" text-anchor="middle">Shackle server</text><text class="d-sub" x="380" y="80" text-anchor="middle">never sees screen or input</text></g>
+            <g class="d-box"><rect x="40" y="170" width="180" height="64" rx="10"/><text class="d-name" x="130" y="198" text-anchor="middle">You</text><text class="d-sub" x="130" y="218" text-anchor="middle">browser or Shackle app</text></g>
+            <g class="d-box"><rect x="540" y="170" width="180" height="64" rx="10"/><text class="d-name" x="630" y="198" text-anchor="middle">Remote computer</text><text class="d-sub" x="630" y="218" text-anchor="middle">Shackle host app</text></g>
+            <text class="d-sub" x="380" y="184" text-anchor="middle">direct and encrypted</text>
+            <path class="d-pointer" transform="translate(386 203)" d="M0 0l13 9-5.600 1.100L11.500 17 8.900 18.300 5.500 12 0 16z"/>
+          </svg>
+          <svg class="d-tall" viewBox="0 0 320 400" aria-hidden="true">
+            <path class="d-link" d="M60 204 C16 204 16 40 60 40"/>
+            <path class="d-link" d="M260 364 C304 364 304 40 260 40"/>
+            <path class="d-direct" d="M160 236 L160 332"/>
+            <g class="d-box"><rect x="60" y="8" width="200" height="64" rx="10"/><text class="d-name" x="160" y="36" text-anchor="middle">Shackle server</text><text class="d-sub" x="160" y="56" text-anchor="middle">never sees screen or input</text></g>
+            <g class="d-box"><rect x="60" y="172" width="200" height="64" rx="10"/><text class="d-name" x="160" y="200" text-anchor="middle">You</text><text class="d-sub" x="160" y="220" text-anchor="middle">browser or Shackle app</text></g>
+            <g class="d-box"><rect x="60" y="332" width="200" height="64" rx="10"/><text class="d-name" x="160" y="360" text-anchor="middle">Remote computer</text><text class="d-sub" x="160" y="380" text-anchor="middle">Shackle host app</text></g>
+            <text class="d-sub" x="176" y="288">direct and encrypted</text>
+            <path class="d-pointer" transform="translate(161 262)" d="M0 0l13 9-5.600 1.100L11.500 17 8.900 18.300 5.500 12 0 16z"/>
+          </svg>
+        </div>
       </div>
     </section>
 
     <section class="section" id="features" aria-labelledby="features-title">
-      <p class="eyebrow reveal">During a session</p>
-      <h2 class="section-title reveal" id="features-title">Everything you need to actually help</h2>
-      <ul class="features">
-        <li class="spot reveal"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg><b>Live screen</b><span>See the remote desktop as it happens.</span></li>
-        <li class="spot reveal"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 3 14 7-6 2-2 6z"/></svg><b>Mouse and keyboard</b><span>Full control, with system-key capture in full screen.</span></li>
-        <li class="spot reveal"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="5" width="9" height="7" rx="1.500"/><rect x="13" y="5" width="9" height="7" rx="1.500"/><path d="M6 16h12M9 19h6"/></svg><b>Monitor switching</b><span>Jump between screens on multi-monitor setups.</span></li>
-        <li class="spot reveal"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg><b>Quality presets</b><span>Trade sharpness for speed on slow connections.</span></li>
-        <li class="spot reveal"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="3" width="8" height="4" rx="1"/><path d="M16 5h2a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h2"/></svg><b>Clipboard both ways</b><span>Copy on one computer, paste on the other.</span></li>
-        <li class="spot reveal"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M12 18v-6m0 0-2.500 2.500M12 12l2.500 2.500"/></svg><b>File transfer</b><span>Both directions, up to 2 GB.</span></li>
-        <li class="spot reveal"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V5a1 1 0 0 1 1-1h4M15 4h4a1 1 0 0 1 1 1v4M20 15v4a1 1 0 0 1-1 1h-4M9 20H5a1 1 0 0 1-1-1v-4"/></svg><b>Full screen</b><span>Work on the remote computer as if you were there.</span></li>
-        <li class="spot reveal"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 4 6v6c0 4.500 3.400 8.300 8 9 4.600-.7 8-4.500 8-9V6z"/><path d="m9 12 2 2 4-4"/></svg><b>Always visible</b><span>A banner on the host shows who is connected, with an End button.</span></li>
-      </ul>
+      <div class="wrap split split-list">
+        <div class="section-head">
+          <h2 id="features-title">Everything you need to actually help</h2>
+        </div>
+        <ul class="features">
+          <li><b>Live screen</b><span>See the remote desktop as it happens.</span></li>
+          <li><b>Mouse and keyboard</b><span>Full control, with system-key capture in full screen.</span></li>
+          <li><b>Monitor switching</b><span>Jump between screens on multi-monitor setups.</span></li>
+          <li><b>Quality presets</b><span>Trade sharpness for speed on slow connections.</span></li>
+          <li><b>Clipboard both ways</b><span>Copy on one computer, paste on the other.</span></li>
+          <li><b>File transfer</b><span>Both directions, up to 2 GB.</span></li>
+          <li><b>Full screen</b><span>Work on the remote computer as if you were there.</span></li>
+          <li><b>Always visible</b><span>A banner on the host shows who is connected, with an End button.</span></li>
+        </ul>
+      </div>
     </section>
 
     <section class="section" aria-labelledby="steps-title">
-      <p class="eyebrow reveal">Get started</p>
-      <h2 class="section-title reveal" id="steps-title">Connected in three steps</h2>
-      <ol class="steps">
-        <li class="reveal"><span>1</span><h3>Both install Shackle</h3><p>Open it. Each computer gets its own ID and a one-time password.</p></li>
-        <li class="reveal"><span>2</span><h3>Share ID and password</h3><p>The person being helped reads theirs out. The helper types them in.</p></li>
-        <li class="reveal"><span>3</span><h3>Click Allow</h3><p>Nothing happens until the person at the computer approves. They can end it at any moment.</p></li>
-      </ol>
-    </section>
-
-    <section class="facts" aria-label="Why Shackle">
-      <div class="reveal"><h3>Free, for any use</h3><p>No account, no session limits, no "commercial use suspected" pop-ups.</p></div>
-      <div class="reveal"><h3>Open source</h3><p>MIT licensed. Read it, change it, or run your own server.</p></div>
-      <div class="reveal"><h3>Direct and encrypted</h3><p>The two computers talk to each other, not through us.</p></div>
-    </section>
-
-    <section class="section selfhost" id="self-host" aria-labelledby="self-title">
-      <div class="selfhost-copy">
-        <p class="eyebrow reveal">Self-host</p>
-        <h2 class="section-title reveal" id="self-title">Run your own server</h2>
-        <p class="section-lede reveal">One Docker Compose file brings up the Shackle server, automatic HTTPS and a TURN relay for strict networks. Then reach your computers from any browser.</p>
-        <p class="reveal"><a class="text-link" href="https://github.com/silicodey/shackle#run-the-server">Server setup guide <span aria-hidden="true">→</span></a></p>
+      <div class="wrap split split-list">
+        <div class="section-head">
+          <h2 id="steps-title">Connected in three steps</h2>
+        </div>
+        <ol class="steps">
+          <li><h3>Both install Shackle</h3><p>Open it. Each computer gets its own ID and a one-time password.</p></li>
+          <li><h3>Share ID and password</h3><p>The person being helped reads theirs out. The helper types them in.</p></li>
+          <li><h3>Click Allow</h3><p>Nothing happens until the person at the computer approves. They can end it at any moment.</p></li>
+        </ol>
       </div>
-      <div class="terminal reveal">
-        <div class="window-bar" aria-hidden="true"><i></i><i></i><i></i><span>~/shackle</span></div>
+    </section>
+
+    <section class="section facts-section" aria-label="Why Shackle">
+      <div class="wrap facts">
+        <div><h3>Free, for any use</h3><p>No account, no session limits, no "commercial use suspected" pop-ups.</p></div>
+        <div><h3>Open source</h3><p>MIT licensed. Read it, change it, or run your own server.</p></div>
+        <div><h3>Direct and encrypted</h3><p>The two computers talk to each other, not through us.</p></div>
+      </div>
+    </section>
+
+    <section class="section" id="self-host" aria-labelledby="self-title">
+      <div class="wrap split">
+        <div class="split-copy">
+          <h2 id="self-title">Run your own server</h2>
+          <p class="lede">One Docker Compose file brings up the Shackle server, automatic HTTPS and a TURN relay for strict networks. Then reach your computers from any browser.</p>
+          <p><a class="text-link" href="https://github.com/silicodey/shackle#run-the-server">Server setup guide <span aria-hidden="true">→</span></a></p>
+        </div>
+        <div class="terminal">
 <pre><code><span class="c"># fill in DOMAIN, PUBLIC_IP, TURN_SECRET</span>
 <span class="p">$</span> cp .env.example .env
 <span class="p">$</span> docker compose up -d
 <span class="p">$</span> docker compose logs shackle
 <span class="c"># shows the one-time setup code</span></code></pre>
+        </div>
       </div>
     </section>
 
-    <section class="final reveal" aria-labelledby="final-title">
-      <h2 id="final-title">Ready when you are.</h2>
-      <p>Free for Windows and Mac. Read the limits above before you install.</p>
-      <a class="btn primary dl-main" href="https://github.com/silicodey/shackle/releases/latest/download/Shackle-Setup-Windows.exe">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11m0 0-4.500-4.500M12 15l4.500-4.500M5 19.500h14"/></svg>
-        <span class="dl-label">Download for Windows</span>
-      </a>
+    <section class="section final" aria-labelledby="final-title">
+      <div class="wrap">
+        <h2 id="final-title">Ready when you are</h2>
+        <p class="lede">Free for Windows and Mac. Read the limits above before you install.</p>
+        <a class="btn primary dl-main" href="https://github.com/silicodey/shackle/releases/latest/download/Shackle-Setup-Windows.exe">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11m0 0-4.500-4.500M12 15l4.500-4.500M5 19.500h14"/></svg>
+          <span class="dl-label">Download for Windows</span>
+        </a>
+      </div>
     </section>
   </main>
 
   <footer class="foot">
-    <div class="foot-inner">
-      <div class="foot-brand"><img src="/mark.svg" alt="" width="34" height="34">SHACKLE</div>
+    <div class="wrap">
+      <a class="brand" href="/"><img src="/mark.svg" alt="" width="24" height="24">Shackle</a>
       <p>Free, open-source remote desktop, made by <a href="https://silicode.co">Silicode</a>. Custom software, data &amp; analytics and automation, engineered in Prishtina since 2015.</p>
       <p class="copy">&copy; 2026 Silicode. MIT licence. <a href="/privacy.html">Privacy</a>. <span id="analytics-settings-wrap">This page counts visits with Google Analytics only if you allow it; the app has no tracking. <button type="button" class="linkish" id="analytics-settings">Change analytics choice</button></span></p>
     </div>
-    <div class="foot-band"><svg class="glyph" viewBox="0 0 319 121" aria-hidden="true"><rect x="55" y="0" width="11" height="11"/><rect x="66" y="0" width="11" height="11"/><rect x="77" y="0" width="11" height="11"/><rect x="176" y="0" width="11" height="11"/><rect x="187" y="0" width="11" height="11"/><rect x="198" y="0" width="11" height="11"/><rect x="231" y="0" width="11" height="11"/><rect x="242" y="0" width="11" height="11"/><rect x="253" y="0" width="11" height="11"/><rect x="44" y="11" width="11" height="11"/><rect x="55" y="11" width="11" height="11"/><rect x="66" y="11" width="11" height="11"/><rect x="176" y="11" width="11" height="11"/><rect x="187" y="11" width="11" height="11"/><rect x="198" y="11" width="11" height="11"/><rect x="242" y="11" width="11" height="11"/><rect x="253" y="11" width="11" height="11"/><rect x="264" y="11" width="11" height="11"/><rect x="33" y="22" width="11" height="11"/><rect x="44" y="22" width="11" height="11"/><rect x="55" y="22" width="11" height="11"/><rect x="165" y="22" width="11" height="11"/><rect x="176" y="22" width="11" height="11"/><rect x="187" y="22" width="11" height="11"/><rect x="253" y="22" width="11" height="11"/><rect x="264" y="22" width="11" height="11"/><rect x="275" y="22" width="11" height="11"/><rect x="22" y="33" width="11" height="11"/><rect x="33" y="33" width="11" height="11"/><rect x="44" y="33" width="11" height="11"/><rect x="154" y="33" width="11" height="11"/><rect x="165" y="33" width="11" height="11"/><rect x="176" y="33" width="11" height="11"/><rect x="264" y="33" width="11" height="11"/><rect x="275" y="33" width="11" height="11"/><rect x="286" y="33" width="11" height="11"/><rect x="11" y="44" width="11" height="11"/><rect x="22" y="44" width="11" height="11"/><rect x="33" y="44" width="11" height="11"/><rect x="154" y="44" width="11" height="11"/><rect x="165" y="44" width="11" height="11"/><rect x="176" y="44" width="11" height="11"/><rect x="275" y="44" width="11" height="11"/><rect x="286" y="44" width="11" height="11"/><rect x="297" y="44" width="11" height="11"/><rect x="0" y="55" width="11" height="11"/><rect x="11" y="55" width="11" height="11"/><rect x="22" y="55" width="11" height="11"/><rect x="154" y="55" width="11" height="11"/><rect x="165" y="55" width="11" height="11"/><rect x="176" y="55" width="11" height="11"/><rect x="286" y="55" width="11" height="11"/><rect x="297" y="55" width="11" height="11"/><rect x="308" y="55" width="11" height="11"/><rect x="11" y="66" width="11" height="11"/><rect x="22" y="66" width="11" height="11"/><rect x="33" y="66" width="11" height="11"/><rect x="143" y="66" width="11" height="11"/><rect x="154" y="66" width="11" height="11"/><rect x="165" y="66" width="11" height="11"/><rect x="275" y="66" width="11" height="11"/><rect x="286" y="66" width="11" height="11"/><rect x="297" y="66" width="11" height="11"/><rect x="22" y="77" width="11" height="11"/><rect x="33" y="77" width="11" height="11"/><rect x="44" y="77" width="11" height="11"/><rect x="132" y="77" width="11" height="11"/><rect x="143" y="77" width="11" height="11"/><rect x="154" y="77" width="11" height="11"/><rect x="264" y="77" width="11" height="11"/><rect x="275" y="77" width="11" height="11"/><rect x="286" y="77" width="11" height="11"/><rect x="33" y="88" width="11" height="11"/><rect x="44" y="88" width="11" height="11"/><rect x="55" y="88" width="11" height="11"/><rect x="132" y="88" width="11" height="11"/><rect x="143" y="88" width="11" height="11"/><rect x="154" y="88" width="11" height="11"/><rect x="253" y="88" width="11" height="11"/><rect x="264" y="88" width="11" height="11"/><rect x="275" y="88" width="11" height="11"/><rect x="44" y="99" width="11" height="11"/><rect x="55" y="99" width="11" height="11"/><rect x="66" y="99" width="11" height="11"/><rect x="132" y="99" width="11" height="11"/><rect x="143" y="99" width="11" height="11"/><rect x="154" y="99" width="11" height="11"/><rect x="242" y="99" width="11" height="11"/><rect x="253" y="99" width="11" height="11"/><rect x="264" y="99" width="11" height="11"/><rect x="55" y="110" width="11" height="11"/><rect x="66" y="110" width="11" height="11"/><rect x="77" y="110" width="11" height="11"/><rect x="121" y="110" width="11" height="11"/><rect x="132" y="110" width="11" height="11"/><rect x="143" y="110" width="11" height="11"/><rect x="231" y="110" width="11" height="11"/><rect x="242" y="110" width="11" height="11"/><rect x="253" y="110" width="11" height="11"/></svg></div>
   </footer>
   <script src="/site.js"></script>
   <script src="/analytics.js"></script>
